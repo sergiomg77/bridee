@@ -21,7 +21,7 @@ export default function AuthFormFields({
   onPasswordChange,
   onSubmit,
 }: AuthFormFieldsProps) {
-  const submitLabel = mode === 'signin' ? 'Sign In' : 'Create Account';
+  const submitLabel = mode === 'signin' ? 'Log In' : 'Create Account';
 
   return (
     <View>

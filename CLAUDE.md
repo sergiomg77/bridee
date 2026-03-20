@@ -27,6 +27,7 @@
 ## Security
 - No secrets in code, .env only
 - All inputs validated before hitting database
+- .env file must always be at E:\SergioApps\Bridee\app\.env — never at the repo root. Expo CLI only loads .env from the project directory where app.json lives.
 
 ## Git
 - Never commit to main directly
