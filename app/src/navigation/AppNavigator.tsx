@@ -5,13 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 
 import AuthScreen from '../screens/auth/AuthScreen';
 import DiscoverScreen from '../screens/discover/DiscoverScreen';
-import HomeScreen from '../screens/home/HomeScreen';
+import SavedScreen from '../screens/saved/SavedScreen';
+import DressDetailScreen from '../screens/dress/DressDetailScreen';
 import MarketplaceScreen from '../screens/marketplace/MarketplaceScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
-import { AuthStackParamList, AppTabParamList } from '../types/navigation';
+import { AuthStackParamList, SavedStackParamList, AppTabParamList } from '../types/navigation';
 
 const AuthNav = createStackNavigator<AuthStackParamList>();
+const SavedNav = createStackNavigator<SavedStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export function AuthStack() {
@@ -19,6 +21,15 @@ export function AuthStack() {
     <AuthNav.Navigator screenOptions={{ headerShown: false }}>
       <AuthNav.Screen name="AuthScreen" component={AuthScreen} />
     </AuthNav.Navigator>
+  );
+}
+
+function SavedStack() {
+  return (
+    <SavedNav.Navigator screenOptions={{ headerShown: false }}>
+      <SavedNav.Screen name="SavedScreen" component={SavedScreen} />
+      <SavedNav.Screen name="DressDetailScreen" component={DressDetailScreen} />
+    </SavedNav.Navigator>
   );
 }
 
@@ -56,7 +67,7 @@ export function AppStack() {
       })}
     >
       <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Saved" component={HomeScreen} />
+      <Tab.Screen name="Saved" component={SavedStack} />
       <Tab.Screen name="Marketplace" component={MarketplaceScreen} />
       <Tab.Screen name="Community" component={CommunityScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />

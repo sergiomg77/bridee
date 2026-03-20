@@ -22,3 +22,16 @@ export interface BoutiqueDress {
 export interface DressWithBoutique extends Dress {
   boutique_dresses: BoutiqueDress[];
 }
+
+export interface Boutique {
+  id: string;
+  name: string;
+}
+
+export interface BoutiqueDressWithDetails extends BoutiqueDress {
+  boutiques: Boutique | null;
+}
+
+export interface DressWithBoutiqueDetails extends Dress {
+  boutique_dresses: BoutiqueDressWithDetails[];
+}
