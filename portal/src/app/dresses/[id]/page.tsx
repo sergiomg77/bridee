@@ -107,7 +107,7 @@ export default function EditDressPage() {
         const [dressResult, bdResult] = await Promise.all([
           supabase
             .from('dresses')
-            .select('id, title, subtitle, long_description, color_name, color_code, style_tags')
+            .select('id, title, subtitle, long_description, color_name, color_code, style_tags, image_path')
             .eq('id', dressId)
             .single(),
           supabase
@@ -140,6 +140,7 @@ export default function EditDressPage() {
           color_name: string | null;
           color_code: string | null;
           style_tags: string[] | null;
+          image_path: string | null;
         };
 
         const bd = bdResult.data as {
@@ -148,14 +149,6 @@ export default function EditDressPage() {
           available_sizes: string[] | null;
           is_active: boolean;
         };
-
-        // Fetch primary photo
-        const { data: photoRow } = await supabase
-          .from('dress_photos')
-          .select('path')
-          .eq('dress_id', dressId)
-          .eq('sort_order', 0)
-          .maybeSingle();
 
         setIds({ boutiqueDressId: bd.id });
         setDressTitle(dress.title);
@@ -172,10 +165,10 @@ export default function EditDressPage() {
           is_active: bd.is_active,
         });
 
-        if (photoRow?.path) {
-          setImagePath(photoRow.path as string);
+        if (dress.image_path) {
+          setImagePath(dress.image_path);
           setImagePreview(
-            `${SUPABASE_URL}/storage/v1/object/public/dress-photos/${photoRow.path as string}`
+            `${SUPABASE_URL}/storage/v1/object/public/dress-photos/${dress.image_path}`
           );
         }
 
@@ -482,19 +475,15 @@ export default function EditDressPage() {
                 <div>
                   <label htmlFor="color_code" className={labelClass}>Color Code</label>
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl border border-gray-200 flex-shrink-0"
-                      style={{ backgroundColor: form.color_code || '#FFFFFF' }}
-                    />
                     <input
                       id="color_code"
                       name="color_code"
-                      type="text"
-                      value={form.color_code}
+                      type="color"
+                      value={form.color_code || '#FFFFFF'}
                       onChange={handleChange}
-                      placeholder="#FFFFF0"
-                      className={`${inputClass} flex-1`}
+                      className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer flex-shrink-0 p-0.5"
                     />
+                    <span className="text-sm text-gray-600">{form.color_code || '#FFFFFF'}</span>
                   </div>
                 </div>
               </div>

@@ -3,19 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import { updateBoutiqueDress, type BoutiqueDressRow, type DressPhoto } from '@/services/dress';
+import { updateBoutiqueDress, type BoutiqueDressRow } from '@/services/dress';
 import logger from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
 function getDressPhotoUrl(path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/dress-photos/${path}`;
-}
-
-function getPrimaryPhoto(photos: DressPhoto[]): string | null {
-  if (!photos.length) return null;
-  const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order);
-  return sorted[0].path;
 }
 
 interface DressesViewProps {
@@ -101,7 +95,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
           {rows.map((row) => {
             const dress = row.dresses;
             if (!dress) return null;
-            const photoPath = getPrimaryPhoto(dress.dress_photos);
+            const photoPath = dress.image_path;
 
             return (
               <Link
@@ -182,7 +176,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
               {rows.map((row) => {
                 const dress = row.dresses;
                 if (!dress) return null;
-                const photoPath = getPrimaryPhoto(dress.dress_photos);
+                const photoPath = dress.image_path;
 
                 return (
                   <tr key={row.id} className="hover:bg-gray-50/50 transition">

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { getBoutique, updateBoutique, type BoutiqueUpdate } from '@/services/boutique';
+import { getBoutique } from '@/services/boutique';
 import logger from '@/lib/logger';
 
 interface FormValues {
@@ -154,14 +154,24 @@ export default function ProfilePage() {
     setSaveSuccess(false);
 
     try {
-      const values: BoutiqueUpdate = {
+      const payload = {
         ...form,
         is_active: form.name.trim() !== '',
       };
 
-      const { error } = await updateBoutique(supabase, boutiqueId, values);
-      if (error) {
-        setSaveError(error);
+      logger.info('ProfilePage: saving boutique', { boutiqueId, payload });
+
+      const res = await fetch('/api/profile/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json() as { success?: boolean; error?: string };
+      logger.info('ProfilePage: save response', { status: res.status, json });
+
+      if (!res.ok || json.error) {
+        setSaveError(json.error ?? 'Failed to save profile.');
       } else {
         setSaveSuccess(true);
         logger.info('ProfilePage: boutique saved', { boutiqueId });
@@ -196,12 +206,19 @@ export default function ProfilePage() {
         return;
       }
 
-      const { error: saveError } = await updateBoutique(supabase, boutiqueId, {
-        logo_url: path,
+      logger.info('ProfilePage: saving logo_url', { boutiqueId, path });
+
+      const saveRes = await fetch('/api/profile/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logo_url: path }),
       });
 
-      if (saveError) {
-        setLogoError(saveError);
+      const saveJson = await saveRes.json() as { success?: boolean; error?: string };
+      logger.info('ProfilePage: logo save response', { status: saveRes.status, saveJson });
+
+      if (!saveRes.ok || saveJson.error) {
+        setLogoError(saveJson.error ?? 'Failed to save logo.');
         setLogoLoading(false);
         return;
       }

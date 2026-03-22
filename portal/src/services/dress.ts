@@ -27,6 +27,7 @@ export interface Dress {
   color_name: string | null;
   color_code: string | null;
   style_tags: string[] | null;
+  image_path: string | null;
   created_at: string;
 }
 
@@ -38,11 +39,6 @@ export interface BoutiqueDress {
   available_sizes: string[] | null;
   is_active: boolean;
   created_at: string;
-}
-
-export interface DressPhoto {
-  path: string;
-  sort_order: number;
 }
 
 export interface BoutiqueDressRow {
@@ -59,7 +55,7 @@ export interface BoutiqueDressRow {
     color_name: string | null;
     color_code: string | null;
     style_tags: string[] | null;
-    dress_photos: DressPhoto[];
+    image_path: string | null;
   } | null;
 }
 
@@ -69,28 +65,15 @@ export async function createDress(
   supabase: SupabaseClient,
   data: DressFormData
 ): Promise<{ data: Dress | null; error: string | null }> {
-  const { image_path, ...dressFields } = data;
-
   const { data: dress, error: dressError } = await supabase
     .from('dresses')
-    .insert(dressFields)
+    .insert(data)
     .select()
     .single();
 
   if (dressError || !dress) {
     logger.error('createDress: insert failed', dressError);
     return { data: null, error: dressError?.message ?? 'Failed to create dress.' };
-  }
-
-  if (image_path) {
-    const { error: photoError } = await supabase
-      .from('dress_photos')
-      .insert({ dress_id: (dress as Dress).id, path: image_path, sort_order: 0 });
-
-    if (photoError) {
-      logger.error('createDress: dress_photos insert failed', photoError);
-      return { data: null, error: photoError.message };
-    }
   }
 
   return { data: dress as Dress, error: null };
@@ -121,53 +104,19 @@ export async function updateDress(
   id: string,
   data: Partial<DressFormData>
 ): Promise<{ data: Dress | null; error: string | null }> {
-  const { image_path, ...dressFields } = data;
+  const { data: dress, error: dressError } = await supabase
+    .from('dresses')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
 
-  // Only call update if there are dress fields to change
-  let updatedDress: Dress | null = null;
-
-  if (Object.keys(dressFields).length > 0) {
-    const { data: dress, error: dressError } = await supabase
-      .from('dresses')
-      .update(dressFields)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (dressError || !dress) {
-      logger.error('updateDress: update failed', dressError);
-      return { data: null, error: dressError?.message ?? 'Failed to update dress.' };
-    }
-
-    updatedDress = dress as Dress;
+  if (dressError || !dress) {
+    logger.error('updateDress: update failed', dressError);
+    return { data: null, error: dressError?.message ?? 'Failed to update dress.' };
   }
 
-  if (image_path !== undefined) {
-    // Replace the primary photo: delete existing sort_order 0, insert new one
-    const { error: deleteError } = await supabase
-      .from('dress_photos')
-      .delete()
-      .eq('dress_id', id)
-      .eq('sort_order', 0);
-
-    if (deleteError) {
-      logger.error('updateDress: dress_photos delete failed', deleteError);
-      return { data: null, error: deleteError.message };
-    }
-
-    if (image_path) {
-      const { error: insertError } = await supabase
-        .from('dress_photos')
-        .insert({ dress_id: id, path: image_path, sort_order: 0 });
-
-      if (insertError) {
-        logger.error('updateDress: dress_photos insert failed', insertError);
-        return { data: null, error: insertError.message };
-      }
-    }
-  }
-
-  return { data: updatedDress, error: null };
+  return { data: dress as Dress, error: null };
 }
 
 export async function updateBoutiqueDress(
@@ -210,10 +159,7 @@ export async function fetchBoutiqueDresses(
         color_name,
         color_code,
         style_tags,
-        dress_photos (
-          path,
-          sort_order
-        )
+        image_path
       )
     `)
     .eq('boutique_id', boutiqueId)

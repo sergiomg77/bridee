@@ -336,19 +336,15 @@ export default function NewDressPage() {
                 <div>
                   <label htmlFor="color_code" className={labelClass}>Color Code</label>
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl border border-gray-200 flex-shrink-0"
-                      style={{ backgroundColor: form.color_code || '#FFFFFF' }}
-                    />
                     <input
                       id="color_code"
                       name="color_code"
-                      type="text"
-                      value={form.color_code}
+                      type="color"
+                      value={form.color_code || '#FFFFFF'}
                       onChange={handleChange}
-                      placeholder="#FFFFF0"
-                      className={`${inputClass} flex-1`}
+                      className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer flex-shrink-0 p-0.5"
                     />
+                    <span className="text-sm text-gray-600">{form.color_code || '#FFFFFF'}</span>
                   </div>
                 </div>
               </div>
