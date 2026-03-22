@@ -7,8 +7,6 @@ import { createClient } from '@/lib/supabase';
 import { createDress, createBoutiqueDress } from '@/services/dress';
 import logger from '@/lib/logger';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
 const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess'];
 const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau'];
 const SLEEVES = ['Sleeveless', 'Cap Sleeve', 'Short Sleeve', '3/4 Sleeve', 'Long Sleeve', 'Off-Shoulder'];
@@ -88,10 +86,9 @@ export default function NewDressPage() {
   const [pageError, setPageError] = useState<string | null>(null);
 
   const [form, setForm] = useState<DressFormState>(emptyForm);
-  const [imagePath, setImagePath] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -164,37 +161,13 @@ export default function NewDressPage() {
     });
   }
 
-  async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
+  function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !boutiqueId) return;
+    if (!file) return;
 
-    setPhotoLoading(true);
     setPhotoError(null);
-
-    try {
-      const path = `${boutiqueId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('dress-photos')
-        .upload(path, file, { upsert: false });
-
-      if (uploadError) {
-        logger.error('NewDressPage: photo upload failed', uploadError);
-        setPhotoError(uploadError.message);
-        setPhotoLoading(false);
-        return;
-      }
-
-      setImagePath(path);
-      setImagePreview(`${SUPABASE_URL}/storage/v1/object/public/dress-photos/${path}`);
-      logger.info('NewDressPage: photo uploaded', { path });
-    } catch (err) {
-      logger.error('NewDressPage: unexpected error during photo upload', err);
-      setPhotoError('An unexpected error occurred during upload.');
-    } finally {
-      setPhotoLoading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    setPhotoFile(file);
+    setImagePreview(URL.createObjectURL(file));
   }
 
   async function handleSave(e: FormEvent<HTMLFormElement>) {
@@ -205,6 +178,25 @@ export default function NewDressPage() {
     setSaveError(null);
 
     try {
+      let coverPhotoPath: string | undefined;
+
+      if (photoFile) {
+        const path = `${boutiqueId}/${Date.now()}-${photoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const { error: uploadError } = await supabase.storage
+          .from('dress-photos')
+          .upload(path, photoFile, { upsert: false });
+
+        if (uploadError) {
+          logger.error('NewDressPage: photo upload failed', uploadError);
+          setSaveError(uploadError.message);
+          setSaveLoading(false);
+          return;
+        }
+
+        coverPhotoPath = path;
+        logger.info('NewDressPage: photo uploaded', { path });
+      }
+
       const { data: dress, error: dressError } = await createDress(
         supabase,
         {
@@ -228,7 +220,7 @@ export default function NewDressPage() {
           style_tags: form.style_tags.length ? form.style_tags : undefined,
           consent_confirmed: form.consent_confirmed,
         },
-        imagePath ?? undefined
+        coverPhotoPath
       );
 
       if (dressError || !dress) {
@@ -319,17 +311,14 @@ export default function NewDressPage() {
             type="file"
             accept="image/*"
             onChange={handlePhotoUpload}
-            disabled={photoLoading}
             className="hidden"
             id="dress-photo"
           />
           <label
             htmlFor="dress-photo"
-            className={`inline-block px-5 py-2.5 rounded-xl border border-[#C9A96E] text-[#C9A96E] text-sm font-medium cursor-pointer hover:bg-[#C9A96E] hover:text-white transition ${
-              photoLoading ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className="inline-block px-5 py-2.5 rounded-xl border border-[#C9A96E] text-[#C9A96E] text-sm font-medium cursor-pointer hover:bg-[#C9A96E] hover:text-white transition"
           >
-            {photoLoading ? 'Uploading…' : imagePath ? 'Change Photo' : 'Upload Photo'}
+            {photoFile ? 'Change Photo' : 'Upload Photo'}
           </label>
           {photoError && <p className="mt-2 text-xs text-red-500">{photoError}</p>}
           <p className="mt-2 text-xs text-gray-400">PNG, JPG or WebP. Portrait orientation recommended.</p>
