@@ -4,23 +4,50 @@ import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import {
-  createDress,
-  createBoutiqueDress,
-} from '@/services/dress';
+import { createDress, createBoutiqueDress } from '@/services/dress';
 import logger from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+
+const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess'];
+const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau'];
+const SLEEVES = ['Sleeveless', 'Cap Sleeve', 'Short Sleeve', '3/4 Sleeve', 'Long Sleeve', 'Off-Shoulder'];
+const BACK_STYLES = ['Open Back', 'V-Back', 'Lace-Up', 'Zipper', 'Button Row', 'Illusion Back'];
+const LENGTHS = ['Mini', 'Knee', 'Tea', 'Ankle', 'Floor', 'Chapel', 'Cathedral'];
+const TRAINS = ['None', 'Sweep', 'Court', 'Chapel', 'Cathedral', 'Royal'];
+const CONDITIONS = ['New', 'Sample', 'Pre-Owned'];
+const AVAILABILITIES = ['In Stock', 'Made to Order', 'Pre-Order'];
+const FABRICS = ['Tulle', 'Lace', 'Satin', 'Silk', 'Chiffon', 'Organza', 'Mikado', 'Crepe', 'Velvet', 'Georgette'];
+const DETAILS_OPTIONS = ['Beading', 'Sequins', 'Embroidery', 'Appliqué', 'Ruching', 'Pleating', 'Pockets', 'Belt', 'Bow'];
+const OCCASIONS = ['Garden', 'Beach', 'Church', 'Courthouse', 'Ballroom', 'Destination', 'Outdoor', 'Indoor'];
+const STYLE_TAGS_OPTIONS = ['Romantic', 'Boho', 'Classic', 'Modern', 'Vintage', 'Rustic', 'Glamorous', 'Minimalist', 'Ethereal'];
+const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2X', '4X'];
+
+type ArrayField = 'fabric' | 'details' | 'occasions' | 'style_tags' | 'available_sizes';
 
 interface DressFormState {
   title: string;
   subtitle: string;
   long_description: string;
+  designer: string;
+  silhouette: string;
+  neckline: string;
+  sleeve: string;
+  back_style: string;
+  length: string;
+  train: string;
   color_name: string;
   color_code: string;
-  style_tags: string; // comma-separated in UI
+  condition: string;
+  availability: string;
+  fabric: string[];
+  details: string[];
+  occasions: string[];
+  style_tags: string[];
+  consent_confirmed: boolean;
+  sku: string;
   price: string;
+  price_visible: boolean;
   available_sizes: string[];
   is_active: boolean;
 }
@@ -29,10 +56,25 @@ const emptyForm: DressFormState = {
   title: '',
   subtitle: '',
   long_description: '',
+  designer: '',
+  silhouette: '',
+  neckline: '',
+  sleeve: '',
+  back_style: '',
+  length: '',
+  train: '',
   color_name: '',
   color_code: '#FFFFFF',
-  style_tags: '',
+  condition: '',
+  availability: '',
+  fabric: [],
+  details: [],
+  occasions: [],
+  style_tags: [],
+  consent_confirmed: false,
+  sku: '',
   price: '',
+  price_visible: true,
   available_sizes: [],
   is_active: false,
 };
@@ -103,18 +145,23 @@ export default function NewDressPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleChange(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleSizeToggle(size: string) {
-    setForm((prev) => ({
-      ...prev,
-      available_sizes: prev.available_sizes.includes(size)
-        ? prev.available_sizes.filter((s) => s !== size)
-        : [...prev.available_sizes, size],
-    }));
+  function handleArrayToggle(field: ArrayField, value: string) {
+    setForm((prev) => {
+      const current = prev[field];
+      return {
+        ...prev,
+        [field]: current.includes(value)
+          ? current.filter((v) => v !== value)
+          : [...current, value],
+      };
+    });
   }
 
   async function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
@@ -125,7 +172,6 @@ export default function NewDressPage() {
     setPhotoError(null);
 
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg';
       const path = `${boutiqueId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
 
       const { error: uploadError } = await supabase.storage
@@ -159,20 +205,31 @@ export default function NewDressPage() {
     setSaveError(null);
 
     try {
-      const styleTags = form.style_tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean);
-
-      const { data: dress, error: dressError } = await createDress(supabase, {
-        title: form.title,
-        subtitle: form.subtitle || undefined,
-        long_description: form.long_description || undefined,
-        color_name: form.color_name || undefined,
-        color_code: form.color_code || undefined,
-        style_tags: styleTags,
-        image_path: imagePath ?? undefined,
-      });
+      const { data: dress, error: dressError } = await createDress(
+        supabase,
+        {
+          title: form.title,
+          subtitle: form.subtitle || undefined,
+          long_description: form.long_description || undefined,
+          designer: form.designer || undefined,
+          silhouette: form.silhouette || undefined,
+          neckline: form.neckline || undefined,
+          sleeve: form.sleeve || undefined,
+          back_style: form.back_style || undefined,
+          length: form.length || undefined,
+          train: form.train || undefined,
+          color_name: form.color_name || undefined,
+          color_code: form.color_code || undefined,
+          condition: form.condition || undefined,
+          availability: form.availability || undefined,
+          fabric: form.fabric.length ? form.fabric : undefined,
+          details: form.details.length ? form.details : undefined,
+          occasions: form.occasions.length ? form.occasions : undefined,
+          style_tags: form.style_tags.length ? form.style_tags : undefined,
+          consent_confirmed: form.consent_confirmed,
+        },
+        imagePath ?? undefined
+      );
 
       if (dressError || !dress) {
         setSaveError(dressError ?? 'Failed to create dress.');
@@ -180,11 +237,11 @@ export default function NewDressPage() {
         return;
       }
 
-      const price = form.price ? parseFloat(form.price) : 0;
-
       const { error: bdError } = await createBoutiqueDress(supabase, dress.id, boutiqueId, {
-        price,
-        available_sizes: form.available_sizes,
+        sku: form.sku || undefined,
+        price: form.price ? parseFloat(form.price) : undefined,
+        price_visible: form.price_visible,
+        available_sizes: form.available_sizes.length ? form.available_sizes : undefined,
         is_active: form.is_active,
       });
 
@@ -205,8 +262,16 @@ export default function NewDressPage() {
 
   const inputClass =
     'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C9A96E] focus:border-transparent transition';
+  const selectClass =
+    'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#C9A96E] focus:border-transparent transition';
   const labelClass =
     'block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5';
+  const chipClass = (active: boolean) =>
+    `px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer ${
+      active
+        ? 'bg-[#C9A96E] border-[#C9A96E] text-white'
+        : 'border-gray-200 text-gray-500 hover:border-[#C9A96E] hover:text-[#C9A96E]'
+    }`;
 
   if (pageLoading) {
     return (
@@ -226,7 +291,6 @@ export default function NewDressPage() {
 
   return (
     <main className="min-h-screen bg-[#FAFAF8]">
-      {/* Top bar */}
       <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg font-light tracking-[0.15em] text-gray-800 uppercase">
           Bridee <span className="text-[#C9A96E]">Partner</span>
@@ -239,9 +303,9 @@ export default function NewDressPage() {
       <div className="max-w-2xl mx-auto px-6 py-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-8">Add New Dress</h2>
 
-        {/* Photo upload */}
+        {/* ── Cover Photo ─────────────────────────────────────────────── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-6">
-          <h3 className="text-base font-semibold text-gray-800 mb-6">Dress Photo</h3>
+          <h3 className="text-base font-semibold text-gray-800 mb-6">Cover Photo</h3>
 
           {imagePreview && (
             <div className="mb-4 rounded-xl overflow-hidden aspect-[3/4] max-w-[200px]">
@@ -272,23 +336,30 @@ export default function NewDressPage() {
         </div>
 
         <form onSubmit={handleSave} className="space-y-6">
-          {/* Section 1 — Dress details */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-            <h3 className="text-base font-semibold text-gray-800 mb-6">Dress Details</h3>
 
+          {/* ── Basic Info ──────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Basic Info</h3>
             <div className="space-y-4">
+
               <div>
                 <label htmlFor="title" className={labelClass}>
                   Title <span className="text-red-400">*</span>
                 </label>
                 <input
-                  id="title"
-                  name="title"
-                  type="text"
-                  required
-                  value={form.title}
-                  onChange={handleChange}
+                  id="title" name="title" type="text" required
+                  value={form.title} onChange={handleChange}
                   placeholder="Ivory Lace A-Line"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="designer" className={labelClass}>Designer</label>
+                <input
+                  id="designer" name="designer" type="text"
+                  value={form.designer} onChange={handleChange}
+                  placeholder="Vera Wang"
                   className={inputClass}
                 />
               </div>
@@ -296,11 +367,8 @@ export default function NewDressPage() {
               <div>
                 <label htmlFor="subtitle" className={labelClass}>Subtitle</label>
                 <input
-                  id="subtitle"
-                  name="subtitle"
-                  type="text"
-                  value={form.subtitle}
-                  onChange={handleChange}
+                  id="subtitle" name="subtitle" type="text"
+                  value={form.subtitle} onChange={handleChange}
                   placeholder="Soft tulle with delicate lace appliqué"
                   className={inputClass}
                 />
@@ -309,96 +377,216 @@ export default function NewDressPage() {
               <div>
                 <label htmlFor="long_description" className={labelClass}>Description</label>
                 <textarea
-                  id="long_description"
-                  name="long_description"
-                  rows={4}
-                  value={form.long_description}
-                  onChange={handleChange}
+                  id="long_description" name="long_description" rows={4}
+                  value={form.long_description} onChange={handleChange}
                   placeholder="Describe the dress in detail…"
                   className={`${inputClass} resize-none`}
                 />
               </div>
 
-              {/* Color */}
+            </div>
+          </div>
+
+          {/* ── Style ───────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Style</h3>
+            <div className="grid grid-cols-2 gap-4">
+
+              <div>
+                <label htmlFor="silhouette" className={labelClass}>Silhouette</label>
+                <select id="silhouette" name="silhouette" value={form.silhouette} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {SILHOUETTES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="neckline" className={labelClass}>Neckline</label>
+                <select id="neckline" name="neckline" value={form.neckline} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {NECKLINES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="sleeve" className={labelClass}>Sleeve</label>
+                <select id="sleeve" name="sleeve" value={form.sleeve} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {SLEEVES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="back_style" className={labelClass}>Back Style</label>
+                <select id="back_style" name="back_style" value={form.back_style} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {BACK_STYLES.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="length" className={labelClass}>Length</label>
+                <select id="length" name="length" value={form.length} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {LENGTHS.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="train" className={labelClass}>Train</label>
+                <select id="train" name="train" value={form.train} onChange={handleChange} className={selectClass}>
+                  <option value="">— Select —</option>
+                  {TRAINS.map((v) => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── Color ───────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Color</h3>
+            <div className="grid grid-cols-2 gap-4">
+
+              <div>
+                <label htmlFor="color_name" className={labelClass}>Color Name</label>
+                <input
+                  id="color_name" name="color_name" type="text"
+                  value={form.color_name} onChange={handleChange}
+                  placeholder="Ivory"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="color_code" className={labelClass}>Color</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="color_code" name="color_code" type="color"
+                    value={form.color_code || '#FFFFFF'} onChange={handleChange}
+                    className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer flex-shrink-0 p-0.5"
+                  />
+                  <span className="text-sm text-gray-600">{form.color_code || '#FFFFFF'}</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── Details ─────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Details</h3>
+            <div className="space-y-5">
+
+              <div>
+                <p className={labelClass}>Fabric</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {FABRICS.map((v) => (
+                    <button key={v} type="button" onClick={() => handleArrayToggle('fabric', v)}
+                      className={chipClass(form.fabric.includes(v))}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={labelClass}>Details</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {DETAILS_OPTIONS.map((v) => (
+                    <button key={v} type="button" onClick={() => handleArrayToggle('details', v)}
+                      className={chipClass(form.details.includes(v))}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── Classification ──────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Classification</h3>
+            <div className="space-y-5">
+
+              <div>
+                <p className={labelClass}>Occasions</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {OCCASIONS.map((v) => (
+                    <button key={v} type="button" onClick={() => handleArrayToggle('occasions', v)}
+                      className={chipClass(form.occasions.includes(v))}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className={labelClass}>Style Tags</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {STYLE_TAGS_OPTIONS.map((v) => (
+                    <button key={v} type="button" onClick={() => handleArrayToggle('style_tags', v)}
+                      className={chipClass(form.style_tags.includes(v))}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="color_name" className={labelClass}>Color Name</label>
+                  <label htmlFor="condition" className={labelClass}>Condition</label>
+                  <select id="condition" name="condition" value={form.condition} onChange={handleChange} className={selectClass}>
+                    <option value="">— Select —</option>
+                    {CONDITIONS.map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="availability" className={labelClass}>Availability</label>
+                  <select id="availability" name="availability" value={form.availability} onChange={handleChange} className={selectClass}>
+                    <option value="">— Select —</option>
+                    {AVAILABILITIES.map((v) => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ── Boutique Listing ────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <h3 className="text-base font-semibold text-gray-800 mb-6">Boutique Listing</h3>
+            <div className="space-y-5">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="sku" className={labelClass}>SKU</label>
                   <input
-                    id="color_name"
-                    name="color_name"
-                    type="text"
-                    value={form.color_name}
-                    onChange={handleChange}
-                    placeholder="Ivory"
+                    id="sku" name="sku" type="text"
+                    value={form.sku} onChange={handleChange}
+                    placeholder="BD-2024-001"
                     className={inputClass}
                   />
                 </div>
                 <div>
-                  <label htmlFor="color_code" className={labelClass}>Color Code</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      id="color_code"
-                      name="color_code"
-                      type="color"
-                      value={form.color_code || '#FFFFFF'}
-                      onChange={handleChange}
-                      className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer flex-shrink-0 p-0.5"
-                    />
-                    <span className="text-sm text-gray-600">{form.color_code || '#FFFFFF'}</span>
-                  </div>
+                  <label htmlFor="price" className={labelClass}>Price</label>
+                  <input
+                    id="price" name="price" type="number" min="0" step="0.01"
+                    value={form.price} onChange={handleChange}
+                    placeholder="0.00"
+                    className={inputClass}
+                  />
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="style_tags" className={labelClass}>Style Tags</label>
-                <input
-                  id="style_tags"
-                  name="style_tags"
-                  type="text"
-                  value={form.style_tags}
-                  onChange={handleChange}
-                  placeholder="romantic, boho, lace, vintage"
-                  className={inputClass}
-                />
-                <p className="mt-1.5 text-xs text-gray-400">Comma-separated, e.g. romantic, boho, lace</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2 — Boutique listing */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
-            <h3 className="text-base font-semibold text-gray-800 mb-6">Boutique Listing</h3>
-
-            <div className="space-y-5">
-              <div>
-                <label htmlFor="price" className={labelClass}>Price</label>
-                <input
-                  id="price"
-                  name="price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.price}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  className={inputClass}
-                />
               </div>
 
               <div>
                 <p className={labelClass}>Available Sizes</p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {SIZES.map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => handleSizeToggle(size)}
-                      className={`px-4 py-2 rounded-xl border text-sm font-medium transition ${
-                        form.available_sizes.includes(size)
-                          ? 'bg-[#C9A96E] border-[#C9A96E] text-white'
-                          : 'border-gray-200 text-gray-500 hover:border-[#C9A96E] hover:text-[#C9A96E]'
-                      }`}
-                    >
+                    <button key={size} type="button" onClick={() => handleArrayToggle('available_sizes', size)}
+                      className={chipClass(form.available_sizes.includes(size))}>
                       {size}
                     </button>
                   ))}
@@ -407,10 +595,26 @@ export default function NewDressPage() {
 
               <div className="flex items-center justify-between py-3 border-t border-gray-100">
                 <div>
+                  <p className="text-sm font-medium text-gray-700">Show price to brides</p>
+                  <p className="text-xs text-gray-400 mt-0.5">When off, price is hidden in the app</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm((prev) => ({ ...prev, price_visible: !prev.price_visible }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    form.price_visible ? 'bg-[#C9A96E]' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                    form.price_visible ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                <div>
                   <p className="text-sm font-medium text-gray-700">Active listing</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    Active dresses are visible to brides in the app
-                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">Active dresses are visible to brides in the app</p>
                 </div>
                 <button
                   type="button"
@@ -419,17 +623,34 @@ export default function NewDressPage() {
                     form.is_active ? 'bg-[#C9A96E]' : 'bg-gray-200'
                   }`}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
-                      form.is_active ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
+                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                    form.is_active ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
                 </button>
               </div>
+
             </div>
           </div>
 
-          {/* Save bar */}
+          {/* ── Consent ─────────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="consent_confirmed"
+                required
+                checked={form.consent_confirmed}
+                onChange={(e) => setForm((prev) => ({ ...prev, consent_confirmed: e.target.checked }))}
+                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#C9A96E] focus:ring-[#C9A96E]"
+              />
+              <span className="text-sm text-gray-700">
+                I confirm that I have the right to list this dress and that the information provided is accurate.{' '}
+                <span className="text-red-400">*</span>
+              </span>
+            </label>
+          </div>
+
+          {/* ── Save bar ────────────────────────────────────────────────── */}
           <div className="flex items-center justify-between">
             {saveError && <p className="text-sm text-red-500">{saveError}</p>}
             {!saveError && <span />}
@@ -441,6 +662,7 @@ export default function NewDressPage() {
               {saveLoading ? 'Saving…' : 'Save Dress'}
             </button>
           </div>
+
         </form>
       </div>
     </main>

@@ -95,7 +95,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
           {rows.map((row) => {
             const dress = row.dresses;
             if (!dress) return null;
-            const photoPath = dress.image_path;
+            const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
 
             return (
               <Link
@@ -105,10 +105,10 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
               >
                 {/* Photo */}
                 <div className="aspect-[3/4] bg-gray-50 overflow-hidden">
-                  {photoPath ? (
+                  {coverPath ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={getDressPhotoUrl(photoPath)}
+                      src={getDressPhotoUrl(coverPath)}
                       alt={dress.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
@@ -122,6 +122,9 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                 {/* Info */}
                 <div className="p-3">
                   <p className="text-sm font-medium text-gray-800 truncate">{dress.title}</p>
+                  {dress.designer && (
+                    <p className="text-xs text-gray-400 truncate mt-0.5">{dress.designer}</p>
+                  )}
                   {row.price !== null && (
                     <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
                       ${Number(row.price).toLocaleString()}
@@ -176,17 +179,17 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
               {rows.map((row) => {
                 const dress = row.dresses;
                 if (!dress) return null;
-                const photoPath = dress.image_path;
+                const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
 
                 return (
                   <tr key={row.id} className="hover:bg-gray-50/50 transition">
                     {/* Thumbnail */}
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                        {photoPath ? (
+                        {coverPath ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={getDressPhotoUrl(photoPath)}
+                            src={getDressPhotoUrl(coverPath)}
                             alt={dress.title}
                             className="w-full h-full object-cover"
                           />
@@ -198,14 +201,14 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                       </div>
                     </td>
 
-                    {/* Title */}
+                    {/* Title + Designer */}
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800 truncate max-w-[180px]">
                         {dress.title}
                       </p>
-                      {dress.subtitle && (
+                      {dress.designer && (
                         <p className="text-xs text-gray-400 truncate max-w-[180px]">
-                          {dress.subtitle}
+                          {dress.designer}
                         </p>
                       )}
                     </td>

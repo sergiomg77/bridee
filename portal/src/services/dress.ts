@@ -3,20 +3,41 @@ import logger from '@/lib/logger';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+/** Matches dresses table columns (no id / created_at). */
 export interface DressFormData {
   title: string;
   subtitle?: string;
   long_description?: string;
+  designer?: string;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  back_style?: string;
+  length?: string;
+  train?: string;
   color_name?: string;
   color_code?: string;
-  style_tags: string[];
-  image_path?: string;
+  condition?: string;
+  availability?: string;
+  fabric?: string[];
+  details?: string[];
+  occasions?: string[];
+  style_tags?: string[];
+  consent_confirmed?: boolean;
 }
 
+/** Matches boutique_dresses table columns (no id / dress_id / boutique_id / created_at). */
 export interface BoutiqueDressFormData {
-  price: number;
-  available_sizes: string[];
-  is_active: boolean;
+  sku?: string;
+  price?: number;
+  price_visible?: boolean;
+  available_sizes?: string[];
+  is_active?: boolean;
+}
+
+export interface DressPhoto {
+  path: string;
+  sort_order: number;
 }
 
 export interface Dress {
@@ -24,10 +45,22 @@ export interface Dress {
   title: string;
   subtitle: string | null;
   long_description: string | null;
+  designer: string | null;
+  silhouette: string | null;
+  neckline: string | null;
+  sleeve: string | null;
+  back_style: string | null;
+  length: string | null;
+  train: string | null;
   color_name: string | null;
   color_code: string | null;
+  condition: string | null;
+  availability: string | null;
+  fabric: string[] | null;
+  details: string[] | null;
+  occasions: string[] | null;
   style_tags: string[] | null;
-  image_path: string | null;
+  consent_confirmed: boolean;
   created_at: string;
 }
 
@@ -35,7 +68,9 @@ export interface BoutiqueDress {
   id: string;
   dress_id: string;
   boutique_id: string;
+  sku: string | null;
   price: number | null;
+  price_visible: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
   created_at: string;
@@ -44,26 +79,32 @@ export interface BoutiqueDress {
 export interface BoutiqueDressRow {
   id: string; // boutique_dresses.id
   dress_id: string;
+  sku: string | null;
   price: number | null;
+  price_visible: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
   dresses: {
     id: string;
     title: string;
     subtitle: string | null;
-    long_description: string | null;
+    designer: string | null;
     color_name: string | null;
     color_code: string | null;
-    style_tags: string[] | null;
-    image_path: string | null;
+    dress_photos: DressPhoto[];
   } | null;
 }
 
 // ─── Service functions ────────────────────────────────────────────────────────
 
+/**
+ * Insert a new dress, then insert the cover photo into dress_photos
+ * (sort_order = 0) if coverPhotoPath is provided.
+ */
 export async function createDress(
   supabase: SupabaseClient,
-  data: DressFormData
+  data: DressFormData,
+  coverPhotoPath?: string
 ): Promise<{ data: Dress | null; error: string | null }> {
   const { data: dress, error: dressError } = await supabase
     .from('dresses')
@@ -74,6 +115,17 @@ export async function createDress(
   if (dressError || !dress) {
     logger.error('createDress: insert failed', dressError);
     return { data: null, error: dressError?.message ?? 'Failed to create dress.' };
+  }
+
+  if (coverPhotoPath) {
+    const { error: photoError } = await supabase
+      .from('dress_photos')
+      .insert({ dress_id: (dress as Dress).id, path: coverPhotoPath, sort_order: 0 });
+
+    if (photoError) {
+      logger.error('createDress: dress_photos insert failed', photoError);
+      return { data: null, error: photoError.message };
+    }
   }
 
   return { data: dress as Dress, error: null };
@@ -99,10 +151,15 @@ export async function createBoutiqueDress(
   return { data: row as BoutiqueDress, error: null };
 }
 
+/**
+ * Update dress fields. If newCoverPhotoPath is provided, delete the existing
+ * sort_order=0 photo and insert the new one.
+ */
 export async function updateDress(
   supabase: SupabaseClient,
   id: string,
-  data: Partial<DressFormData>
+  data: Partial<DressFormData>,
+  newCoverPhotoPath?: string
 ): Promise<{ data: Dress | null; error: string | null }> {
   const { data: dress, error: dressError } = await supabase
     .from('dresses')
@@ -114,6 +171,28 @@ export async function updateDress(
   if (dressError || !dress) {
     logger.error('updateDress: update failed', dressError);
     return { data: null, error: dressError?.message ?? 'Failed to update dress.' };
+  }
+
+  if (newCoverPhotoPath !== undefined) {
+    const { error: deleteError } = await supabase
+      .from('dress_photos')
+      .delete()
+      .eq('dress_id', id)
+      .eq('sort_order', 0);
+
+    if (deleteError) {
+      logger.error('updateDress: cover photo delete failed', deleteError);
+      return { data: null, error: deleteError.message };
+    }
+
+    const { error: insertError } = await supabase
+      .from('dress_photos')
+      .insert({ dress_id: id, path: newCoverPhotoPath, sort_order: 0 });
+
+    if (insertError) {
+      logger.error('updateDress: cover photo insert failed', insertError);
+      return { data: null, error: insertError.message };
+    }
   }
 
   return { data: dress as Dress, error: null };
@@ -148,18 +227,22 @@ export async function fetchBoutiqueDresses(
     .select(`
       id,
       dress_id,
+      sku,
       price,
+      price_visible,
       available_sizes,
       is_active,
       dresses (
         id,
         title,
         subtitle,
-        long_description,
+        designer,
         color_name,
         color_code,
-        style_tags,
-        image_path
+        dress_photos (
+          path,
+          sort_order
+        )
       )
     `)
     .eq('boutique_id', boutiqueId)
