@@ -65,7 +65,7 @@ export async function updateBoutique(
     .update(values)
     .eq('id', boutiqueId)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
     logger.error('updateBoutique: update failed', error);

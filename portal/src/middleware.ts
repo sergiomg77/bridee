@@ -29,10 +29,14 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Routes that do NOT require authentication.
+  // /onboarding is intentionally absent — it requires a valid session
+  // but does not require a boutique_id (that check lives in each page).
   const isPublicPage =
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/register') ||
-    request.nextUrl.pathname.startsWith('/api/auth/');
+    request.nextUrl.pathname.startsWith('/api/auth/') ||
+    request.nextUrl.pathname.startsWith('/auth/callback');
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();

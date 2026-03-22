@@ -34,7 +34,7 @@ const emptyForm: DressFormState = {
   style_tags: '',
   price: '',
   available_sizes: [],
-  is_active: true,
+  is_active: false,
 };
 
 export default function NewDressPage() {

@@ -34,8 +34,8 @@ export default async function DressesPage() {
   }
 
   if (!profile?.boutique_id) {
-    logger.warn('DressesPage: no boutique_id on profile', { userId: user.id });
-    redirect('/profile');
+    logger.warn('DressesPage: no boutique_id on profile, redirecting to onboarding', { userId: user.id });
+    redirect('/onboarding');
   }
 
   const boutiqueId = profile.boutique_id as string;

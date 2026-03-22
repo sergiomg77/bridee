@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { getBoutique, updateBoutique, type BoutiqueUpdate } from '@/services/boutique';
 import logger from '@/lib/logger';
@@ -37,6 +38,7 @@ const emptyForm: FormValues = {
 };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const supabase = createClient();
 
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
@@ -85,8 +87,8 @@ export default function ProfilePage() {
           return;
         }
         if (!profile?.boutique_id) {
-          setPageError('No boutique linked to this account.');
-          setPageLoading(false);
+          logger.warn('ProfilePage: boutique_id is null, redirecting to onboarding', { userId: user.id });
+          router.replace('/onboarding');
           return;
         }
 

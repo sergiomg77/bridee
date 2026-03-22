@@ -44,6 +44,22 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('boutique_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    logger.error('DashboardPage: profiles query failed', profileError);
+    // Non-fatal: user still gets the dashboard, individual pages will redirect as needed
+  }
+
+  if (!profileError && !profile?.boutique_id) {
+    logger.warn('DashboardPage: no boutique_id on profile, redirecting to onboarding', { userId: user.id });
+    redirect('/onboarding');
+  }
+
   return (
     <main className="min-h-screen bg-[#FAFAF8]">
       {/* Top bar */}
