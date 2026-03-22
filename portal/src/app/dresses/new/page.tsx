@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { createDress, createBoutiqueDress } from '@/services/dress';
+import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
 const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess'];
@@ -267,31 +267,26 @@ export default function NewDressPage() {
 
   if (pageLoading) {
     return (
-      <main className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <p className="text-sm text-gray-400">Loading…</p>
-      </main>
+      <PortalLayout title="Add New Dress">
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-gray-400">Loading…</p>
+        </div>
+      </PortalLayout>
     );
   }
 
   if (pageError) {
     return (
-      <main className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <p className="text-sm text-red-500">{pageError}</p>
-      </main>
+      <PortalLayout title="Add New Dress">
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-red-500">{pageError}</p>
+        </div>
+      </PortalLayout>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8]">
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-light tracking-[0.15em] text-gray-800 uppercase">
-          Bridee <span className="text-[#C9A96E]">Partner</span>
-        </h1>
-        <Link href="/dresses" className="text-sm text-[#C9A96E] hover:text-[#b8945a] transition">
-          ← Back to Dresses
-        </Link>
-      </header>
-
+    <PortalLayout title="Add New Dress">
       <div className="max-w-2xl mx-auto px-6 py-10">
         <h2 className="text-2xl font-semibold text-gray-800 mb-8">Add New Dress</h2>
 
@@ -654,6 +649,6 @@ export default function NewDressPage() {
 
         </form>
       </div>
-    </main>
+    </PortalLayout>
   );
 }

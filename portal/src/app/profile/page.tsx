@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { getBoutique } from '@/services/boutique';
+import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
 interface FormValues {
@@ -246,38 +246,28 @@ export default function ProfilePage() {
   const labelClass =
     'block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5';
 
-  // ─── Loading / error states ──────────────────────────────────────────────────
   if (pageLoading) {
     return (
-      <main className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <p className="text-sm text-gray-400">Loading…</p>
-      </main>
+      <PortalLayout title="Boutique Profile">
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-gray-400">Loading…</p>
+        </div>
+      </PortalLayout>
     );
   }
 
   if (pageError) {
     return (
-      <main className="min-h-screen bg-[#FAFAF8] flex items-center justify-center">
-        <p className="text-sm text-red-500">{pageError}</p>
-      </main>
+      <PortalLayout title="Boutique Profile">
+        <div className="flex items-center justify-center py-20">
+          <p className="text-sm text-red-500">{pageError}</p>
+        </div>
+      </PortalLayout>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8]">
-      {/* Top bar */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-light tracking-[0.15em] text-gray-800 uppercase">
-          Bridee <span className="text-[#C9A96E]">Partner</span>
-        </h1>
-        <Link
-          href="/dashboard"
-          className="text-sm text-[#C9A96E] hover:text-[#b8945a] transition"
-        >
-          ← Dashboard
-        </Link>
-      </header>
-
+    <PortalLayout title="Boutique Profile">
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
         {/* Logo section */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
@@ -526,6 +516,6 @@ export default function ProfilePage() {
           </div>
         </form>
       </div>
-    </main>
+    </PortalLayout>
   );
 }

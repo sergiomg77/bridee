@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { fetchBoutiqueDresses } from '@/services/dress';
 import DressesView from './DressesView';
+import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
 export default async function DressesPage() {
@@ -50,20 +50,7 @@ export default async function DressesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8]">
-      {/* Top bar */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-light tracking-[0.15em] text-gray-800 uppercase">
-          Bridee <span className="text-[#C9A96E]">Partner</span>
-        </h1>
-        <Link
-          href="/dashboard"
-          className="text-sm text-[#C9A96E] hover:text-[#b8945a] transition"
-        >
-          ← Dashboard
-        </Link>
-      </header>
-
+    <PortalLayout title="Dress Catalog">
       <div className="max-w-6xl mx-auto px-6 py-10">
         <div className="mb-8">
           <h2 className="text-2xl font-semibold text-gray-800">Dress Catalog</h2>
@@ -80,6 +67,6 @@ export default async function DressesPage() {
           <DressesView dresses={dresses ?? []} boutiqueId={boutiqueId} />
         )}
       </div>
-    </main>
+    </PortalLayout>
   );
 }

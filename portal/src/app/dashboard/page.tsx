@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
+import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
 const NAV_CARDS = [
@@ -61,17 +62,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8]">
-      {/* Top bar */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-light tracking-[0.15em] text-gray-800 uppercase">
-          Bridee <span className="text-[#C9A96E]">Partner</span>
-        </h1>
-        <span className="text-sm text-gray-400">{user.email}</span>
-      </header>
-
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
+    <PortalLayout title="Dashboard">
+      <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Welcome */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-1">
@@ -123,6 +115,6 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
-    </main>
+    </PortalLayout>
   );
 }
