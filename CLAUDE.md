@@ -20,14 +20,25 @@ E:\SergioApps\Bridee\
 - Storage: Supabase Storage (dress-photos public, tryon-photos private)
 - AI Try-On: Google virtual-try-on-001 via @google/genai SDK
 
-## Database Tables
-- boutiques — store info
-- dresses — dress model (title, subtitle, long_description, 
-  color_name, color_code, style_tags, image_path)
-- boutique_dresses — dress at specific boutique (price, 
-  available_sizes, is_active)
-- user_likes — bride liked dresses
-- profiles — user roles (bride / boutique)
+## Database Schema
+The authoritative database schema is at:
+E:\SergioApps\Bridee\backend\supabase\schema.sql
+
+Always read this file before writing any database queries.
+Never assume column names — read the schema file first.
+
+## Database Rules
+- Never write migrations or ALTER TABLE statements
+- Never create or drop tables or columns
+- All schema changes are planned in Claude.ai and executed
+  manually in Supabase SQL Editor
+- Photo URLs are never stored — only storage paths
+- Full URL for dress photos = SUPABASE_URL +
+  /storage/v1/object/public/dress-photos/ + path
+- Full URL for boutique logos = SUPABASE_URL +
+  /storage/v1/object/public/boutique-logos/ + path
+- sort_order = 0 on dress_photos is always the cover photo
+- is_tryon_eligible = true means the photo is safe for AI try-on
 
 ## Current App State
 - Auth screen: sign in, sign up, email confirmation flow
