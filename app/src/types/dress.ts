@@ -6,7 +6,7 @@ export interface Dress {
   color_name: string;
   color_code: string;
   style_tags: string[];
-  image_url: string;
+  image_path: string;
   created_at: string;
 }
 

@@ -8,6 +8,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY in .env');
 }
 
+export function getDressPhotoUrl(imagePath: string | null | undefined): string {
+  if (!imagePath) return 'no-image';
+  return `${supabaseUrl}/storage/v1/object/public/dress-photos/${imagePath}`;
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,

@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { fetchDressById } from '../../services/dress/dressService';
 import { DressWithBoutiqueDetails } from '../../types/dress';
 import { SavedStackParamList } from '../../types/navigation';
+import { getDressPhotoUrl } from '../../lib/supabase';
 
 type Props = StackScreenProps<SavedStackParamList, 'DressDetailScreen'>;
 
@@ -80,8 +81,8 @@ export default function DressDetailScreen({ route, navigation }: Props) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Photo */}
         <View style={styles.imageContainer}>
-          {dress.image_url ? (
-            <Image source={{ uri: dress.image_url }} style={styles.image} resizeMode="cover" />
+          {getDressPhotoUrl(dress.image_path) !== 'no-image' ? (
+            <Image source={{ uri: getDressPhotoUrl(dress.image_path) }} style={styles.image} resizeMode="cover" />
           ) : (
             <View style={styles.imagePlaceholder} />
           )}

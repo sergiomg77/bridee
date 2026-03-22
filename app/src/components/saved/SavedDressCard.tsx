@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { DressWithBoutiqueDetails } from '../../types/dress';
+import { getDressPhotoUrl } from '../../lib/supabase';
 
 interface SavedDressCardProps {
   dress: DressWithBoutiqueDetails;
@@ -15,8 +16,8 @@ export default function SavedDressCard({ dress, onPress }: SavedDressCardProps) 
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      {dress.image_url ? (
-        <Image source={{ uri: dress.image_url }} style={styles.image} resizeMode="cover" />
+      {getDressPhotoUrl(dress.image_path) !== 'no-image' ? (
+        <Image source={{ uri: getDressPhotoUrl(dress.image_path) }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.imagePlaceholder} />
       )}
