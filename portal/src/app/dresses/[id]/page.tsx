@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { updateDress, updateBoutiqueDress } from '@/services/dress';
@@ -67,6 +68,7 @@ export default function EditDressPage() {
   const [ids, setIds] = useState<LoadedIds | null>(null);
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
   const [dressTitle, setDressTitle] = useState<string>('');
+  const [photoCount, setPhotoCount] = useState<number>(0);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
@@ -148,8 +150,8 @@ export default function EditDressPage() {
         const bid = profile.boutique_id as string;
         setBoutiqueId(bid);
 
-        // Fetch dress, boutique_dress, and cover photo in parallel
-        const [dressResult, bdResult, photoResult] = await Promise.all([
+        // Fetch dress, boutique_dress, cover photo, and photo count in parallel
+        const [dressResult, bdResult, photoResult, countResult] = await Promise.all([
           supabase
             .from('dresses')
             .select(
@@ -169,6 +171,10 @@ export default function EditDressPage() {
             .eq('dress_id', dressId)
             .eq('sort_order', 0)
             .maybeSingle(),
+          supabase
+            .from('dress_photos')
+            .select('*', { count: 'exact', head: true })
+            .eq('dress_id', dressId),
         ]);
 
         if (dressResult.error || !dressResult.data) {
@@ -187,6 +193,12 @@ export default function EditDressPage() {
 
         if (photoResult.error) {
           logger.error('EditDressPage: dress_photos query failed', photoResult.error);
+        }
+
+        if (countResult.error) {
+          logger.error('EditDressPage: photo count query failed', countResult.error);
+        } else {
+          setPhotoCount(countResult.count ?? 0);
         }
 
         const dress = dressResult.data as {
@@ -451,6 +463,12 @@ export default function EditDressPage() {
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-semibold text-gray-800 truncate">{dressTitle}</h2>
           <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+            <Link
+              href={`/dresses/${dressId}/photos`}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:border-[#C9A96E] hover:text-[#C9A96E] transition"
+            >
+              Photos ({photoCount})
+            </Link>
             <span className="text-xs text-gray-500 font-medium">
               {form.is_active ? 'Active' : 'Inactive'}
             </span>
