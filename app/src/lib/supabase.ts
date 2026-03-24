@@ -13,6 +13,11 @@ export function getDressPhotoUrl(imagePath: string | null | undefined): string {
   return `${supabaseUrl}/storage/v1/object/public/dress-photos/${imagePath}`;
 }
 
+export function getTryOnResultUrl(path: string | null | undefined): string {
+  if (!path) return 'no-image';
+  return `${supabaseUrl}/storage/v1/object/public/tryon-photos/${path}`;
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,

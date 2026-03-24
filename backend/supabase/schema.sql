@@ -89,6 +89,7 @@ result_path text,
 created_at timestamp with time zone DEFAULT now(),
 updated_at timestamp with time zone DEFAULT now(),
 error_message text,
+seen_at timestamp with time zone,
 CONSTRAINT tryon_queue_pkey PRIMARY KEY (id),
 CONSTRAINT tryon_queue_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
 CONSTRAINT tryon_queue_dress_id_fkey FOREIGN KEY (dress_id) REFERENCES public.dresses(id)
