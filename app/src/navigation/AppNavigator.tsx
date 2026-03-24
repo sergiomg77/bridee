@@ -7,6 +7,7 @@ import AuthScreen from '../screens/auth/AuthScreen';
 import DiscoverScreen from '../screens/discover/DiscoverScreen';
 import SavedScreen from '../screens/saved/SavedScreen';
 import DressDetailScreen from '../screens/dress/DressDetailScreen';
+import TryOnInstructionScreen from '../screens/tryon/TryOnInstructionScreen';
 import MarketplaceScreen from '../screens/marketplace/MarketplaceScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
@@ -29,6 +30,7 @@ function SavedStack() {
     <SavedNav.Navigator screenOptions={{ headerShown: false }}>
       <SavedNav.Screen name="SavedScreen" component={SavedScreen} />
       <SavedNav.Screen name="DressDetailScreen" component={DressDetailScreen} />
+      <SavedNav.Screen name="TryOnInstructionScreen" component={TryOnInstructionScreen} />
     </SavedNav.Navigator>
   );
 }

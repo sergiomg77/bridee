@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,16 +8,22 @@ import {
   ActivityIndicator,
   StyleSheet,
   SafeAreaView,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { fetchDressById } from '../../services/dress/dressService';
-import { DressWithBoutiqueDetails } from '../../types/dress';
+import { DressPhoto, DressWithBoutiqueDetails } from '../../types/dress';
 import { SavedStackParamList } from '../../types/navigation';
 import { getDressPhotoUrl } from '../../lib/supabase';
 
 type Props = StackScreenProps<SavedStackParamList, 'DressDetailScreen'>;
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const CAROUSEL_W = Math.min(SCREEN_W, 430);
+const CAROUSEL_HEIGHT = CAROUSEL_W * (4 / 3);
 
 export default function DressDetailScreen({ route, navigation }: Props) {
   const { dressId } = route.params;
@@ -25,6 +31,10 @@ export default function DressDetailScreen({ route, navigation }: Props) {
   const [dress, setDress] = useState<DressWithBoutiqueDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const modalCarouselRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     async function load() {
@@ -36,9 +46,15 @@ export default function DressDetailScreen({ route, navigation }: Props) {
       }
       setLoading(false);
     }
-
     load();
   }, [dressId]);
+
+  // Scroll modal carousel to the active photo when modal opens
+  useEffect(() => {
+    if (modalVisible && modalCarouselRef.current && activeIndex > 0) {
+      modalCarouselRef.current.scrollTo({ x: activeIndex * SCREEN_W, animated: false });
+    }
+  }, [modalVisible]);
 
   if (loading) {
     return (
@@ -70,31 +86,152 @@ export default function DressDetailScreen({ route, navigation }: Props) {
     );
   }
 
+  const photos: DressPhoto[] = [...dress.dress_photos].sort((a, b) => a.sort_order - b.sort_order);
   const activeBoutiques = dress.boutique_dresses.filter((b) => b.is_active);
-  const minPrice = activeBoutiques.length > 0
-    ? Math.min(...activeBoutiques.map((b) => b.price))
-    : null;
-  const allSizes = [...new Set(activeBoutiques.flatMap((b) => b.available_sizes))].sort();
+  const prices = activeBoutiques.map((b) => b.price).filter((p): p is number => p !== null);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+  const allSizes = [...new Set(activeBoutiques.flatMap((b) => b.available_sizes ?? []))].sort();
+
+  const hasTryOn = dress.dress_photos.some((p) => p.is_tryon_eligible);
+
+  function handleCarouselScroll(x: number) {
+    const idx = Math.round(x / CAROUSEL_W);
+    if (idx !== activeIndex) setActiveIndex(idx);
+  }
+
+  function handleModalScroll(x: number) {
+    const idx = Math.round(x / SCREEN_W);
+    if (idx !== activeIndex) setActiveIndex(idx);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ── Full-screen photo modal ── */}
+      <Modal
+        visible={modalVisible}
+        transparent={false}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+        statusBarTranslucent
+      >
+        <View style={styles.modalContainer}>
+          <ScrollView
+            ref={modalCarouselRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={photos.length > 1}
+            onMomentumScrollEnd={(e) => handleModalScroll(e.nativeEvent.contentOffset.x)}
+            style={styles.modalScroll}
+          >
+            {photos.map((photo) => (
+              <TouchableOpacity
+                key={photo.id}
+                activeOpacity={1}
+                onPress={() => setModalVisible(false)}
+                style={styles.modalPage}
+              >
+                <Image
+                  source={{ uri: getDressPhotoUrl(photo.path) }}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Dot indicators */}
+          {photos.length > 1 && (
+            <View style={styles.dotsContainer}>
+              {photos.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      </Modal>
+
+      {/* ── Main scrollable content ── */}
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Photo */}
-        <View style={styles.imageContainer}>
-          {getDressPhotoUrl(dress.image_path) !== 'no-image' ? (
-            <Image source={{ uri: getDressPhotoUrl(dress.image_path) }} style={styles.image} resizeMode="cover" />
+        {/* Photo carousel */}
+        <View style={styles.carouselContainer}>
+          {photos.length > 0 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              scrollEnabled={photos.length > 1}
+              onMomentumScrollEnd={(e) => handleCarouselScroll(e.nativeEvent.contentOffset.x)}
+              style={styles.carousel}
+            >
+              {photos.map((photo) => (
+                <TouchableOpacity
+                  key={photo.id}
+                  activeOpacity={0.95}
+                  onPress={() => setModalVisible(true)}
+                  style={styles.carouselPage}
+                >
+                  <Image
+                    source={{ uri: getDressPhotoUrl(photo.path) }}
+                    style={styles.carouselImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           ) : (
             <View style={styles.imagePlaceholder} />
           )}
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.8}>
+
+          {/* Back button */}
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+          >
             <Ionicons name="chevron-back" size={24} color="#333" />
           </TouchableOpacity>
+
+          {/* Dot indicators */}
+          {photos.length > 1 && (
+            <View style={styles.dotsContainer}>
+              {photos.map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dot, i === activeIndex ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
+        {/* ── Detail content ── */}
         <View style={styles.details}>
-          {/* Title & subtitle */}
-          <Text style={styles.title}>{dress.title}</Text>
-          <Text style={styles.subtitle}>{dress.subtitle}</Text>
+          {/* Title, badge & subtitle */}
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{dress.title}</Text>
+            {hasTryOn && (
+              <TouchableOpacity
+                style={styles.tryOnBadge}
+                onPress={() => {
+                  const tryOnPhoto = dress.dress_photos.find((p) => p.is_tryon_eligible);
+                  if (tryOnPhoto) {
+                    navigation.navigate('TryOnInstructionScreen', {
+                      dressId: dress.id,
+                      tryOnPhotoPath: tryOnPhoto.path,
+                    });
+                  }
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.tryOnText}>Try it on</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {dress.subtitle ? <Text style={styles.subtitle}>{dress.subtitle}</Text> : null}
 
           {/* Price */}
           {minPrice !== null && (
@@ -102,13 +239,19 @@ export default function DressDetailScreen({ route, navigation }: Props) {
           )}
 
           {/* Color */}
-          <View style={styles.row}>
-            <Text style={styles.label}>Colour</Text>
-            <View style={styles.colorRow}>
-              <View style={[styles.colorSwatch, { backgroundColor: dress.color_code }]} />
-              <Text style={styles.colorName}>{dress.color_name}</Text>
+          {(dress.color_name || dress.color_code) ? (
+            <View style={styles.row}>
+              <Text style={styles.label}>Colour</Text>
+              <View style={styles.colorRow}>
+                {dress.color_code ? (
+                  <View style={[styles.colorSwatch, { backgroundColor: dress.color_code }]} />
+                ) : null}
+                {dress.color_name ? (
+                  <Text style={styles.colorName}>{dress.color_name}</Text>
+                ) : null}
+              </View>
             </View>
-          </View>
+          ) : null}
 
           {/* Sizes */}
           {allSizes.length > 0 && (
@@ -131,17 +274,21 @@ export default function DressDetailScreen({ route, navigation }: Props) {
               {activeBoutiques.map((b) => (
                 <View key={b.id} style={styles.boutiqueRow}>
                   <Text style={styles.boutiqueName}>{b.boutiques?.name ?? 'Boutique'}</Text>
-                  <Text style={styles.boutiquePrice}>£{b.price.toLocaleString()}</Text>
+                  {b.price !== null ? (
+                    <Text style={styles.boutiquePrice}>£{b.price.toLocaleString()}</Text>
+                  ) : null}
                 </View>
               ))}
             </View>
           )}
 
           {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.label}>About this dress</Text>
-            <Text style={styles.description}>{dress.long_description}</Text>
-          </View>
+          {dress.long_description ? (
+            <View style={styles.section}>
+              <Text style={styles.label}>About this dress</Text>
+              <Text style={styles.description}>{dress.long_description}</Text>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -152,6 +299,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+    maxWidth: 430,
+    alignSelf: 'center',
+    width: '100%',
   },
   centered: {
     flex: 1,
@@ -162,18 +312,32 @@ const styles = StyleSheet.create({
   backRow: {
     padding: 16,
   },
-  imageContainer: {
+
+  // ── Carousel ──────────────────────────────────────────────────────────────
+  carouselContainer: {
     position: 'relative',
+    width: CAROUSEL_W,
+    height: CAROUSEL_HEIGHT,
   },
-  image: {
-    width: '100%',
-    height: 420,
+  carousel: {
+    width: CAROUSEL_W,
+    height: CAROUSEL_HEIGHT,
+  },
+  carouselPage: {
+    width: CAROUSEL_W,
+    height: CAROUSEL_HEIGHT,
+  },
+  carouselImage: {
+    width: CAROUSEL_W,
+    height: CAROUSEL_HEIGHT,
   },
   imagePlaceholder: {
-    width: '100%',
-    height: 420,
+    width: CAROUSEL_W,
+    height: CAROUSEL_HEIGHT,
     backgroundColor: '#F0EDE8',
   },
+
+  // ── Back button ───────────────────────────────────────────────────────────
   backButton: {
     position: 'absolute',
     top: 16,
@@ -190,14 +354,78 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+
+  // ── Try-On badge ──────────────────────────────────────────────────────────
+  tryOnBadge: {
+    backgroundColor: '#C9A96E',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: 'center',
+  },
+  tryOnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // ── Dot indicators ────────────────────────────────────────────────────────
+  dotsContainer: {
+    position: 'absolute',
+    bottom: 14,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  dotActive: {
+    backgroundColor: '#C9A96E',
+  },
+  dotInactive: {
+    backgroundColor: 'rgba(255,255,255,0.6)',
+  },
+
+  // ── Full-screen modal ─────────────────────────────────────────────────────
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalPage: {
+    width: SCREEN_W,
+    height: SCREEN_H,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: SCREEN_W,
+    height: SCREEN_H,
+  },
+
+  // ── Detail content ────────────────────────────────────────────────────────
   details: {
     padding: 20,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 6,
   },
   title: {
     fontSize: 26,
     fontWeight: '700',
     color: '#333',
-    marginBottom: 6,
   },
   subtitle: {
     fontSize: 16,

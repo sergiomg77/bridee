@@ -5,6 +5,7 @@ export type AuthStackParamList = {
 export type SavedStackParamList = {
   SavedScreen: undefined;
   DressDetailScreen: { dressId: string };
+  TryOnInstructionScreen: { dressId: string; tryOnPhotoPath: string };
 };
 
 export type AppTabParamList = {

@@ -13,11 +13,12 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 export default function SavedDressCard({ dress, onPress }: SavedDressCardProps) {
   const boutiqueName = dress.boutique_dresses[0]?.boutiques?.name ?? null;
+  const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-      {getDressPhotoUrl(dress.image_path) !== 'no-image' ? (
-        <Image source={{ uri: getDressPhotoUrl(dress.image_path) }} style={styles.image} resizeMode="cover" />
+      {getDressPhotoUrl(coverPath) !== 'no-image' ? (
+        <Image source={{ uri: getDressPhotoUrl(coverPath) }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.imagePlaceholder} />
       )}

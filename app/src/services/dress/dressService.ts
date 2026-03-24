@@ -1,6 +1,11 @@
 import { supabase } from '../../lib/supabase';
 import logger from '../../lib/logger';
-import { DressWithBoutique, DressWithBoutiqueDetails } from '../../types/dress';
+import { Dress, DressPhoto, BoutiqueDress, DressWithBoutique, DressWithBoutiqueDetails } from '../../types/dress';
+
+// Internal type for fetchDresses query rows
+type BoutiqueDressQueryRow = BoutiqueDress & {
+  dresses: (Dress & { dress_photos: DressPhoto[] }) | null;
+};
 
 type UserLikeRow = {
   dress_id: string;
@@ -10,19 +15,40 @@ type UserLikeRow = {
 export async function fetchDresses(): Promise<{ data: DressWithBoutique[] | null; error: Error | null }> {
   try {
     const { data, error } = await supabase
-      .from('dresses')
+      .from('boutique_dresses')
       .select(`
         *,
-        boutique_dresses!inner(*)
+        dresses (
+          *,
+          dress_photos (id, path, sort_order, is_tryon_eligible)
+        )
       `)
-      .eq('boutique_dresses.is_active', true);
+      .eq('is_active', true);
 
     if (error) {
       logger.error('fetchDresses failed', error);
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: (data as DressWithBoutique[]) ?? [], error: null };
+    // Deduplicate: group boutique_dress rows by dress_id into DressWithBoutique[]
+    const map = new Map<string, DressWithBoutique>();
+    for (const row of (data as BoutiqueDressQueryRow[]) ?? []) {
+      if (!row.dresses) continue;
+      const { dresses: dressData, ...boutiqueDress } = row;
+      const { dress_photos, ...dress } = dressData;
+      const existing = map.get(row.dress_id);
+      if (existing) {
+        existing.boutique_dresses.push(boutiqueDress);
+      } else {
+        map.set(row.dress_id, {
+          ...dress,
+          dress_photos,
+          boutique_dresses: [boutiqueDress],
+        });
+      }
+    }
+
+    return { data: Array.from(map.values()), error: null };
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Failed to fetch dresses.');
     logger.error('fetchDresses unexpected error', error);
@@ -38,6 +64,7 @@ export async function fetchLikedDresses(userId: string): Promise<{ data: DressWi
         dress_id,
         dresses (
           *,
+          dress_photos (id, path, sort_order, is_tryon_eligible),
           boutique_dresses (
             *,
             boutiques (id, name)
@@ -70,6 +97,7 @@ export async function fetchDressById(dressId: string): Promise<{ data: DressWith
       .from('dresses')
       .select(`
         *,
+        dress_photos (id, path, sort_order, is_tryon_eligible),
         boutique_dresses (
           *,
           boutiques (id, name)

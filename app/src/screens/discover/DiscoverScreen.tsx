@@ -101,6 +101,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
     alignItems: 'center',
     justifyContent: 'center',
+    maxWidth: 430,
+    alignSelf: 'center',
+    width: '100%',
   },
   centered: {
     flex: 1,

@@ -109,6 +109,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
+    maxWidth: 430,
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     flexDirection: 'row',

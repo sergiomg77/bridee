@@ -96,9 +96,10 @@ export default function DressCard({ dress, onLike, onSkip }: DressCardProps) {
     })
   ).current;
 
-  const minPrice = dress.boutique_dresses.length > 0
-    ? Math.min(...dress.boutique_dresses.map((b) => b.price))
-    : null;
+  const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
+
+  const prices = dress.boutique_dresses.map((b) => b.price).filter((p): p is number => p !== null);
+  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
 
   return (
     <Animated.View
@@ -117,8 +118,8 @@ export default function DressCard({ dress, onLike, onSkip }: DressCardProps) {
       </Animated.View>
 
       {/* Dress image */}
-      {getDressPhotoUrl(dress.image_path) !== 'no-image' ? (
-        <Image source={{ uri: getDressPhotoUrl(dress.image_path) }} style={styles.image} resizeMode="cover" />
+      {getDressPhotoUrl(coverPath) !== 'no-image' ? (
+        <Image source={{ uri: getDressPhotoUrl(coverPath) }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.imagePlaceholder} />
       )}

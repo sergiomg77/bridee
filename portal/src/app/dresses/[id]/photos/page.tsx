@@ -602,6 +602,10 @@ export default function PhotosPage() {
           )}
         </div>
 
+        <p className="mt-2 mb-6 text-xs text-gray-400">
+          * Photos are best viewed at 3:4 proportions with a minimum resolution of 1080 × 1440px
+        </p>
+
         {uploadError && (
           <p className="mb-6 text-sm text-red-500">{uploadError}</p>
         )}
