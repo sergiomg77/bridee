@@ -45,6 +45,22 @@ export async function markResultAsSeen(
   return { data, error: null };
 }
 
+export async function createSignedUrl(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string,
+  expiresIn: number = 3600
+): Promise<{ data: string | null; error: Error | null }> {
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn);
+
+  if (error) {
+    logger.error(`createSignedUrl: failed for ${bucket}/${path}`, error);
+    return { data: null, error: new Error(error.message) };
+  }
+
+  return { data: data.signedUrl, error: null };
+}
+
 export async function getUnseenCount(
   supabase: SupabaseClient,
   userId: string

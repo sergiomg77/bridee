@@ -11,8 +11,9 @@ import {
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { supabase, getTryOnResultUrl } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import logger from '../../lib/logger';
+import { createSignedUrl } from '../../services/tryon/tryonResultService';
 import { TryOnStackParamList } from '../../types/navigation';
 
 type Props = StackScreenProps<TryOnStackParamList, 'TryOnResultDetailScreen'>;
@@ -26,6 +27,7 @@ type TryOnJob = {
 export default function TryOnResultDetailScreen({ navigation, route }: Props) {
   const { jobId, dressId } = route.params;
   const [job, setJob] = useState<TryOnJob | null>(null);
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -44,14 +46,28 @@ export default function TryOnResultDetailScreen({ navigation, route }: Props) {
         return;
       }
 
-      setJob(data as TryOnJob);
+      const fetchedJob = data as TryOnJob;
+      setJob(fetchedJob);
+
+      if (fetchedJob.result_path) {
+        const { data: url, error: urlError } = await createSignedUrl(
+          supabase,
+          'tryon-photos',
+          fetchedJob.result_path,
+          3600
+        );
+        if (urlError) {
+          setErrorMessage('Could not load the result image.');
+        } else {
+          setSignedUrl(url);
+        }
+      }
+
       setLoading(false);
     }
 
     load();
   }, [jobId]);
-
-  const imageUrl = getTryOnResultUrl(job?.result_path);
 
   return (
     <View style={styles.container}>
@@ -69,8 +85,8 @@ export default function TryOnResultDetailScreen({ navigation, route }: Props) {
         <View style={styles.centered}>
           <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
-      ) : imageUrl !== 'no-image' ? (
-        <Image source={{ uri: imageUrl }} style={styles.fullImage} resizeMode="contain" />
+      ) : signedUrl ? (
+        <Image source={{ uri: signedUrl }} style={styles.fullImage} resizeMode="contain" />
       ) : (
         <View style={styles.centered}>
           <Text style={styles.errorText}>No result image available.</Text>

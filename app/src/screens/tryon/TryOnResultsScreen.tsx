@@ -14,9 +14,8 @@ import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { supabase } from '../../lib/supabase';
-import { getTryOnResultUrl } from '../../lib/supabase';
 import logger from '../../lib/logger';
-import { fetchTryOnResults, markResultAsSeen, TryOnResult } from '../../services/tryon/tryonResultService';
+import { fetchTryOnResults, markResultAsSeen, createSignedUrl, TryOnResult } from '../../services/tryon/tryonResultService';
 import { TryOnStackParamList } from '../../types/navigation';
 
 type Props = StackScreenProps<TryOnStackParamList, 'TryOnResultsScreen'>;
@@ -28,6 +27,7 @@ export default function TryOnResultsScreen({ navigation }: Props) {
   const [results, setResults] = useState<TryOnResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function load() {
@@ -48,10 +48,23 @@ export default function TryOnResultsScreen({ navigation }: Props) {
       const { data, error } = await fetchTryOnResults(supabase, userId);
       if (error) {
         setErrorMessage(error.message);
-      } else {
-        setResults(data ?? []);
+        setLoading(false);
+        return;
       }
+
+      const fetched = data ?? [];
+      setResults(fetched);
       setLoading(false);
+
+      const urlMap: Record<string, string> = {};
+      await Promise.all(
+        fetched.map(async (item) => {
+          if (!item.result_path) return;
+          const { data: signedUrl } = await createSignedUrl(supabase, 'tryon-photos', item.result_path, 3600);
+          if (signedUrl) urlMap[item.id] = signedUrl;
+        })
+      );
+      setSignedUrls(urlMap);
     }
 
     load();
@@ -99,15 +112,15 @@ export default function TryOnResultsScreen({ navigation }: Props) {
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => {
             const isUnseen = item.seen_at === null;
-            const imageUrl = getTryOnResultUrl(item.result_path);
+            const signedUrl = signedUrls[item.id];
             return (
               <TouchableOpacity
                 style={styles.card}
                 onPress={() => handleCardPress(item)}
                 activeOpacity={0.85}
               >
-                {imageUrl !== 'no-image' ? (
-                  <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+                {signedUrl ? (
+                  <Image source={{ uri: signedUrl }} style={styles.image} resizeMode="cover" />
                 ) : (
                   <View style={styles.imagePlaceholder} />
                 )}

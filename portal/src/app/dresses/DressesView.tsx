@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase';
 import { updateBoutiqueDress, type BoutiqueDressRow } from '@/services/dress';
 import logger from '@/lib/logger';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
 
 function getDressPhotoUrl(path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/dress-photos/${path}`;

@@ -32,7 +32,7 @@ import {
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
 const MAX_PHOTOS = 10;
 
 function getPhotoUrl(path: string): string {

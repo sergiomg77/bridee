@@ -253,5 +253,20 @@ export async function fetchBoutiqueDresses(
     return { data: null, error: error.message };
   }
 
-  return { data: data as BoutiqueDressRow[], error: null };
+  // Supabase JS SDK without Database generics infers foreign-key embeds as
+  // arrays at the TypeScript level even though PostgREST returns a single
+  // object for many-to-one relationships. Normalise here so consumers always
+  // receive the correct shape.
+  const rows: BoutiqueDressRow[] = (data ?? []).map((row) => ({
+    id: row.id,
+    dress_id: row.dress_id,
+    sku: row.sku,
+    price: row.price,
+    price_visible: row.price_visible,
+    available_sizes: row.available_sizes,
+    is_active: row.is_active,
+    dresses: Array.isArray(row.dresses) ? (row.dresses[0] ?? null) : row.dresses,
+  }));
+
+  return { data: rows, error: null };
 }
