@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, SafeAreaView } from 'react-native';
 
+import ScreenHeader from '../../components/shared/ScreenHeader';
 import DressCard from '../../components/discover/DressCard';
 import { fetchDresses, likeDress } from '../../services/dress/dressService';
 import { supabase } from '../../lib/supabase';
@@ -58,40 +59,35 @@ export default function DiscoverScreen() {
     setCurrentIndex((prev) => prev + 1);
   }
 
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#C9A96E" />
-      </View>
-    );
-  }
-
-  if (errorMessage) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{errorMessage}</Text>
-      </View>
-    );
-  }
-
   const currentDress = dresses[currentIndex];
 
   return (
-    <View style={styles.container}>
-      {currentDress ? (
-        <DressCard
-          key={currentDress.id}
-          dress={currentDress}
-          onLike={handleLike}
-          onSkip={handleSkip}
-        />
+    <SafeAreaView style={styles.container}>
+      <ScreenHeader title="Discover" />
+      {loading ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#C9A96E" />
+        </View>
+      ) : errorMessage ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        </View>
+      ) : currentDress ? (
+        <View style={styles.cardContainer}>
+          <DressCard
+            key={currentDress.id}
+            dress={currentDress}
+            onLike={handleLike}
+            onSkip={handleSkip}
+          />
+        </View>
       ) : (
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>No more dresses</Text>
           <Text style={styles.emptySubtitle}>Check back soon for new arrivals</Text>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -99,11 +95,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FAFAFA',
-    alignItems: 'center',
-    justifyContent: 'center',
     maxWidth: 430,
     alignSelf: 'center',
     width: '100%',
+  },
+  cardContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centered: {
     flex: 1,

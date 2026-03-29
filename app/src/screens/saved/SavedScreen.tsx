@@ -6,11 +6,11 @@ import {
   ActivityIndicator,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
+import ScreenHeader from '../../components/shared/ScreenHeader';
 import SavedDressCard from '../../components/saved/SavedDressCard';
 import { fetchLikedDresses } from '../../services/dress/dressService';
 import { supabase } from '../../lib/supabase';
@@ -59,18 +59,7 @@ export default function SavedScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Saved Dresses</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <Ionicons name="options-outline" size={22} color="#333" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
-            <Ionicons name="person-circle-outline" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ScreenHeader title="Saved Dresses" showFilter />
 
       {loading ? (
         <View style={styles.centered}>
@@ -112,28 +101,6 @@ const styles = StyleSheet.create({
     maxWidth: 430,
     alignSelf: 'center',
     width: '100%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    backgroundColor: '#FFFFFF',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    marginLeft: 16,
   },
   grid: {
     padding: 16,

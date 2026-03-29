@@ -26,6 +26,7 @@ type TryOnJob = {
 export default function TryOnResultDetailScreen({ navigation, route }: Props) {
   const { jobId, dressId } = route.params;
   const [job, setJob] = useState<TryOnJob | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -44,14 +45,16 @@ export default function TryOnResultDetailScreen({ navigation, route }: Props) {
         return;
       }
 
-      setJob(data as TryOnJob);
+      const fetchedJob = data as TryOnJob;
+      setJob(fetchedJob);
+
+      const url = await getTryOnResultUrl(fetchedJob.result_path);
+      setImageUrl(url);
       setLoading(false);
     }
 
     load();
   }, [jobId]);
-
-  const imageUrl = getTryOnResultUrl(job?.result_path);
 
   return (
     <View style={styles.container}>
@@ -69,7 +72,7 @@ export default function TryOnResultDetailScreen({ navigation, route }: Props) {
         <View style={styles.centered}>
           <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
-      ) : imageUrl !== 'no-image' ? (
+      ) : imageUrl ? (
         <Image source={{ uri: imageUrl }} style={styles.fullImage} resizeMode="contain" />
       ) : (
         <View style={styles.centered}>

@@ -13,6 +13,13 @@ import TryOnResultDetailScreen from '../screens/tryon/TryOnResultDetailScreen';
 import MarketplaceScreen from '../screens/marketplace/MarketplaceScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import GeneralInformationScreen from '../screens/profile/GeneralInformationScreen';
+import BridalDNAScreen from '../screens/profile/BridalDNAScreen';
+import ShareYourStoryScreen from '../screens/profile/ShareYourStoryScreen';
+import ShoppingPreferencesScreen from '../screens/profile/ShoppingPreferencesScreen';
+import BuildYourMoodboardScreen from '../screens/profile/BuildYourMoodboardScreen';
+import SettingsScreen from '../screens/profile/SettingsScreen';
 import { supabase } from '../lib/supabase';
 import { getUnseenCount } from '../services/tryon/tryonResultService';
 import logger from '../lib/logger';
@@ -21,12 +28,16 @@ import {
   SavedStackParamList,
   TryOnStackParamList,
   AppTabParamList,
+  ProfileStackParamList,
+  RootStackParamList,
 } from '../types/navigation';
 
 const AuthNav = createStackNavigator<AuthStackParamList>();
 const SavedNav = createStackNavigator<SavedStackParamList>();
 const TryOnNav = createStackNavigator<TryOnStackParamList>();
+const ProfileNav = createStackNavigator<ProfileStackParamList>();
 const Tab = createBottomTabNavigator<AppTabParamList>();
+const RootNav = createStackNavigator<RootStackParamList>();
 
 export function AuthStack() {
   return (
@@ -56,6 +67,20 @@ function TryOnStack() {
   );
 }
 
+function ProfileStack() {
+  return (
+    <ProfileNav.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileNav.Screen name="ProfileScreen" component={ProfileScreen} />
+      <ProfileNav.Screen name="GeneralInformationScreen" component={GeneralInformationScreen} />
+      <ProfileNav.Screen name="BridalDNAScreen" component={BridalDNAScreen} />
+      <ProfileNav.Screen name="ShareYourStoryScreen" component={ShareYourStoryScreen} />
+      <ProfileNav.Screen name="ShoppingPreferencesScreen" component={ShoppingPreferencesScreen} />
+      <ProfileNav.Screen name="BuildYourMoodboardScreen" component={BuildYourMoodboardScreen} />
+      <ProfileNav.Screen name="SettingsScreen" component={SettingsScreen} />
+    </ProfileNav.Navigator>
+  );
+}
+
 type TabIconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TAB_ICONS: Record<keyof AppTabParamList, { active: TabIconName; inactive: TabIconName }> = {
@@ -67,14 +92,14 @@ const TAB_ICONS: Record<keyof AppTabParamList, { active: TabIconName; inactive: 
   Messages: { active: 'chatbubble', inactive: 'chatbubble-outline' },
 };
 
-export function AppStack() {
+function MainTabs() {
   const [unseenCount, setUnseenCount] = useState(0);
 
   useEffect(() => {
     async function loadUnseenCount() {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        logger.error('AppStack: failed to get session for badge', sessionError);
+        logger.error('MainTabs: failed to get session for badge', sessionError);
         return;
       }
       const userId = sessionData.session?.user.id;
@@ -82,7 +107,7 @@ export function AppStack() {
 
       const { data, error } = await getUnseenCount(supabase, userId);
       if (error) {
-        logger.error('AppStack: failed to get unseen count', error);
+        logger.error('MainTabs: failed to get unseen count', error);
         return;
       }
       setUnseenCount(data ?? 0);
@@ -131,5 +156,18 @@ export function AppStack() {
       <Tab.Screen name="Community" component={CommunityScreen} />
       <Tab.Screen name="Messages" component={MessagesScreen} />
     </Tab.Navigator>
+  );
+}
+
+export function AppStack() {
+  return (
+    <RootNav.Navigator screenOptions={{ headerShown: false }}>
+      <RootNav.Screen name="MainTabs" component={MainTabs} />
+      <RootNav.Screen
+        name="ProfileStack"
+        component={ProfileStack}
+        options={{ presentation: 'modal' }}
+      />
+    </RootNav.Navigator>
   );
 }

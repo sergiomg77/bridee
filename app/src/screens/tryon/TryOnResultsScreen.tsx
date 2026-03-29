@@ -13,8 +13,8 @@ import {
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { supabase } from '../../lib/supabase';
-import { getTryOnResultUrl } from '../../lib/supabase';
+import ScreenHeader from '../../components/shared/ScreenHeader';
+import { supabase, getTryOnResultUrl } from '../../lib/supabase';
 import logger from '../../lib/logger';
 import { fetchTryOnResults, markResultAsSeen, TryOnResult } from '../../services/tryon/tryonResultService';
 import { TryOnStackParamList } from '../../types/navigation';
@@ -26,6 +26,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 export default function TryOnResultsScreen({ navigation }: Props) {
   const [results, setResults] = useState<TryOnResult[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -48,9 +49,25 @@ export default function TryOnResultsScreen({ navigation }: Props) {
       const { data, error } = await fetchTryOnResults(supabase, userId);
       if (error) {
         setErrorMessage(error.message);
-      } else {
-        setResults(data ?? []);
+        setLoading(false);
+        return;
       }
+
+      const items = data ?? [];
+      setResults(items);
+
+      const urlEntries = await Promise.all(
+        items.map(async (item) => {
+          const url = await getTryOnResultUrl(item.result_path);
+          return [item.id, url] as [string, string | null];
+        })
+      );
+
+      const urlMap: Record<string, string> = {};
+      for (const [id, url] of urlEntries) {
+        if (url) urlMap[id] = url;
+      }
+      setSignedUrls(urlMap);
       setLoading(false);
     }
 
@@ -70,9 +87,7 @@ export default function TryOnResultsScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Try-On Results</Text>
-      </View>
+      <ScreenHeader title="Try On" />
 
       {loading ? (
         <View style={styles.centered}>
@@ -99,14 +114,14 @@ export default function TryOnResultsScreen({ navigation }: Props) {
           columnWrapperStyle={styles.row}
           renderItem={({ item }) => {
             const isUnseen = item.seen_at === null;
-            const imageUrl = getTryOnResultUrl(item.result_path);
+            const imageUrl = signedUrls[item.id] ?? null;
             return (
               <TouchableOpacity
                 style={styles.card}
                 onPress={() => handleCardPress(item)}
                 activeOpacity={0.85}
               >
-                {imageUrl !== 'no-image' ? (
+                {imageUrl ? (
                   <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
                 ) : (
                   <View style={styles.imagePlaceholder} />
@@ -128,21 +143,6 @@ const styles = StyleSheet.create({
     maxWidth: 430,
     alignSelf: 'center',
     width: '100%',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    backgroundColor: '#FFFFFF',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
   },
   grid: {
     padding: 16,

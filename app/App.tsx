@@ -8,6 +8,7 @@ import { Session } from '@supabase/supabase-js';
 import { supabase } from './src/lib/supabase';
 import logger from './src/lib/logger';
 import { AuthStack, AppStack } from './src/navigation/AppNavigator';
+import { navigationRef } from './src/navigation/navigationRef';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -41,7 +42,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           {session ? <AppStack /> : <AuthStack />}
         </NavigationContainer>
       </SafeAreaProvider>

@@ -22,3 +22,18 @@ export type AppTabParamList = {
   Community: undefined;
   Messages: undefined;
 };
+
+export type ProfileStackParamList = {
+  ProfileScreen: undefined;
+  GeneralInformationScreen: undefined;
+  BridalDNAScreen: undefined;
+  ShareYourStoryScreen: undefined;
+  ShoppingPreferencesScreen: undefined;
+  BuildYourMoodboardScreen: undefined;
+  SettingsScreen: undefined;
+};
+
+export type RootStackParamList = {
+  MainTabs: undefined;
+  ProfileStack: undefined;
+};

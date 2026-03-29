@@ -8,16 +8,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY in .env');
 }
 
-export function getDressPhotoUrl(imagePath: string | null | undefined): string {
-  if (!imagePath) return 'no-image';
-  return `${supabaseUrl}/storage/v1/object/public/dress-photos/${imagePath}`;
-}
-
-export function getTryOnResultUrl(path: string | null | undefined): string {
-  if (!path) return 'no-image';
-  return `${supabaseUrl}/storage/v1/object/public/tryon-photos/${path}`;
-}
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
@@ -26,3 +16,17 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: false,
   },
 });
+
+export function getDressPhotoUrl(imagePath: string | null | undefined): string {
+  if (!imagePath) return 'no-image';
+  return `${supabaseUrl}/storage/v1/object/public/dress-photos/${imagePath}`;
+}
+
+export async function getTryOnResultUrl(path: string | null | undefined): Promise<string | null> {
+  if (!path) return null;
+  const { data, error } = await supabase.storage
+    .from('tryon-photos')
+    .createSignedUrl(path, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
