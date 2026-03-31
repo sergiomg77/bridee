@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import ScreenHeader from '../../components/shared/ScreenHeader';
@@ -25,36 +26,39 @@ export default function SavedScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        logger.error('SavedScreen: failed to get session', sessionError);
-        setErrorMessage('Could not load your saved dresses.');
+  useFocusEffect(
+    useCallback(() => {
+      async function load() {
+        setLoading(true);
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          logger.error('SavedScreen: failed to get session', sessionError);
+          setErrorMessage('Could not load your saved dresses.');
+          setLoading(false);
+          return;
+        }
+
+        const userId = sessionData.session?.user.id;
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await fetchLikedDresses(userId);
+        if (error) {
+          setErrorMessage(error.message);
+        } else {
+          setDresses(data ?? []);
+        }
         setLoading(false);
-        return;
       }
 
-      const userId = sessionData.session?.user.id;
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await fetchLikedDresses(userId);
-      if (error) {
-        setErrorMessage(error.message);
-      } else {
-        setDresses(data ?? []);
-      }
-      setLoading(false);
-    }
-
-    load();
-  }, []);
+      load();
+    }, [])
+  );
 
   function handleCardPress(dressId: string) {
-    navigation.navigate('DressDetailScreen', { dressId });
+    navigation.navigate('DressDetailScreen', { dressId, fromSaved: true });
   }
 
   return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import ScreenHeader from '../../components/shared/ScreenHeader';
@@ -30,46 +31,49 @@ export default function TryOnResultsScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function load() {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        logger.error('TryOnResultsScreen: failed to get session', sessionError);
-        setErrorMessage('Could not load your try-on results.');
+  useFocusEffect(
+    useCallback(() => {
+      async function load() {
+        setLoading(true);
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          logger.error('TryOnResultsScreen: failed to get session', sessionError);
+          setErrorMessage('Could not load your try-on results.');
+          setLoading(false);
+          return;
+        }
+
+        const userId = sessionData.session?.user.id;
+        if (!userId) {
+          setLoading(false);
+          return;
+        }
+
+        const { data, error } = await fetchTryOnResults(supabase, userId);
+        if (error) {
+          setErrorMessage(error.message);
+          setLoading(false);
+          return;
+        }
+
+        const fetched = data ?? [];
+        setResults(fetched);
         setLoading(false);
-        return;
+
+        const urlMap: Record<string, string> = {};
+        await Promise.all(
+          fetched.map(async (item) => {
+            if (!item.result_path) return;
+            const { data: signedUrl } = await createSignedUrl(supabase, 'tryon-photos', item.result_path, 3600);
+            if (signedUrl) urlMap[item.id] = signedUrl;
+          })
+        );
+        setSignedUrls(urlMap);
       }
 
-      const userId = sessionData.session?.user.id;
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      const { data, error } = await fetchTryOnResults(supabase, userId);
-      if (error) {
-        setErrorMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
-      const fetched = data ?? [];
-      setResults(fetched);
-      setLoading(false);
-
-      const urlMap: Record<string, string> = {};
-      await Promise.all(
-        fetched.map(async (item) => {
-          if (!item.result_path) return;
-          const { data: signedUrl } = await createSignedUrl(supabase, 'tryon-photos', item.result_path, 3600);
-          if (signedUrl) urlMap[item.id] = signedUrl;
-        })
-      );
-      setSignedUrls(urlMap);
-    }
-
-    load();
-  }, []);
+      load();
+    }, [])
+  );
 
   async function handleCardPress(item: TryOnResult) {
     await markResultAsSeen(supabase, item.id);

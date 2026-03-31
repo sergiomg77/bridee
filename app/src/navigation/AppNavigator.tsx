@@ -20,6 +20,7 @@ import ShareYourStoryScreen from '../screens/profile/ShareYourStoryScreen';
 import ShoppingPreferencesScreen from '../screens/profile/ShoppingPreferencesScreen';
 import BuildYourMoodboardScreen from '../screens/profile/BuildYourMoodboardScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
+import { StackActions } from '@react-navigation/native';
 import { supabase } from '../lib/supabase';
 import { getUnseenCount } from '../services/tryon/tryonResultService';
 import logger from '../lib/logger';
@@ -142,7 +143,18 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Discover" component={DiscoverScreen} />
-      <Tab.Screen name="Saved" component={SavedStack} />
+      <Tab.Screen
+        name="Saved"
+        component={SavedStack}
+        listeners={({ navigation, route }) => ({
+          tabPress: () => {
+            const state = (route as { state?: { index?: number; key?: string } }).state;
+            if (state && typeof state.index === 'number' && state.index > 0 && state.key) {
+              navigation.dispatch({ ...StackActions.popToTop(), target: state.key });
+            }
+          },
+        })}
+      />
       <Tab.Screen
         name="TryOn"
         component={TryOnStack}
@@ -151,6 +163,14 @@ function MainTabs() {
           tabBarBadge: unseenCount > 0 ? unseenCount : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E53935' },
         }}
+        listeners={({ navigation, route }) => ({
+          tabPress: () => {
+            const state = (route as { state?: { index?: number; key?: string } }).state;
+            if (state && typeof state.index === 'number' && state.index > 0 && state.key) {
+              navigation.dispatch({ ...StackActions.popToTop(), target: state.key });
+            }
+          },
+        })}
       />
       <Tab.Screen name="Marketplace" component={MarketplaceScreen} />
       <Tab.Screen name="Community" component={CommunityScreen} />

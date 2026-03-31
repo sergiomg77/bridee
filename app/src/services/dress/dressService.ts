@@ -12,9 +12,20 @@ type UserLikeRow = {
   dresses: DressWithBoutiqueDetails | null;
 };
 
-export async function fetchDresses(): Promise<{ data: DressWithBoutique[] | null; error: Error | null }> {
+export async function fetchDresses(userId?: string | null): Promise<{ data: DressWithBoutique[] | null; error: Error | null }> {
   try {
-    const { data, error } = await supabase
+    let excludedDressIds: string[] = [];
+    if (userId) {
+      const [{ data: likedData }, { data: skippedData }] = await Promise.all([
+        supabase.from('user_likes').select('dress_id').eq('user_id', userId),
+        supabase.from('user_skips').select('dress_id').eq('user_id', userId),
+      ]);
+      const likedIds = (likedData ?? []).map((row: { dress_id: string }) => row.dress_id);
+      const skippedIds = (skippedData ?? []).map((row: { dress_id: string }) => row.dress_id);
+      excludedDressIds = [...new Set([...likedIds, ...skippedIds])];
+    }
+
+    let query = supabase
       .from('boutique_dresses')
       .select(`
         *,
@@ -24,6 +35,12 @@ export async function fetchDresses(): Promise<{ data: DressWithBoutique[] | null
         )
       `)
       .eq('is_active', true);
+
+    if (excludedDressIds.length > 0) {
+      query = query.not('dress_id', 'in', `(${excludedDressIds.join(',')})`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       logger.error('fetchDresses failed', error);
@@ -134,6 +151,46 @@ export async function likeDress(userId: string, dressId: string): Promise<{ data
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Failed to like dress.');
     logger.error('likeDress unexpected error', error);
+    return { data: null, error };
+  }
+}
+
+export async function removeLikedDress(userId: string, dressId: string): Promise<{ data: null; error: Error | null }> {
+  try {
+    const { error } = await supabase
+      .from('user_likes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('dress_id', dressId);
+
+    if (error) {
+      logger.error('removeLikedDress failed', error);
+      return { data: null, error: new Error(error.message) };
+    }
+
+    return { data: null, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error('Failed to remove liked dress.');
+    logger.error('removeLikedDress unexpected error', error);
+    return { data: null, error };
+  }
+}
+
+export async function skipDress(userId: string, dressId: string): Promise<{ data: null; error: Error | null }> {
+  try {
+    const { error } = await supabase
+      .from('user_skips')
+      .insert({ user_id: userId, dress_id: dressId });
+
+    if (error) {
+      logger.error('skipDress failed', error);
+      return { data: null, error: new Error(error.message) };
+    }
+
+    return { data: null, error: null };
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error('Failed to skip dress.');
+    logger.error('skipDress unexpected error', error);
     return { data: null, error };
   }
 }

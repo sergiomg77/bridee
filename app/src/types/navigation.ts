@@ -4,14 +4,14 @@ export type AuthStackParamList = {
 
 export type SavedStackParamList = {
   SavedScreen: undefined;
-  DressDetailScreen: { dressId: string };
+  DressDetailScreen: { dressId: string; fromSaved?: boolean };
   TryOnInstructionScreen: { dressId: string; tryOnPhotoPath: string };
 };
 
 export type TryOnStackParamList = {
   TryOnResultsScreen: undefined;
   TryOnResultDetailScreen: { jobId: string; dressId: string };
-  DressDetailScreen: { dressId: string };
+  DressDetailScreen: { dressId: string; fromSaved?: boolean };
 };
 
 export type AppTabParamList = {

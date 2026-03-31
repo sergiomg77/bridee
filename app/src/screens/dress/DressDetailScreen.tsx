@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
+  Alert,
   Image,
   ScrollView,
   TouchableOpacity,
@@ -11,22 +12,27 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
+import { CompositeScreenProps } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { fetchDressById } from '../../services/dress/dressService';
+import { fetchDressById, removeLikedDress } from '../../services/dress/dressService';
 import { DressPhoto, DressWithBoutiqueDetails } from '../../types/dress';
-import { SavedStackParamList } from '../../types/navigation';
-import { getDressPhotoUrl } from '../../lib/supabase';
+import { SavedStackParamList, TryOnStackParamList } from '../../types/navigation';
+import { supabase, getDressPhotoUrl } from '../../lib/supabase';
+import logger from '../../lib/logger';
 
-type Props = StackScreenProps<SavedStackParamList, 'DressDetailScreen'>;
+type Props = CompositeScreenProps<
+  StackScreenProps<SavedStackParamList, 'DressDetailScreen'>,
+  StackScreenProps<TryOnStackParamList, 'DressDetailScreen'>
+>;
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const CAROUSEL_W = Math.min(SCREEN_W, 430);
 const CAROUSEL_HEIGHT = CAROUSEL_W * (4 / 3);
 
 export default function DressDetailScreen({ route, navigation }: Props) {
-  const { dressId } = route.params;
+  const { dressId, fromSaved } = route.params;
 
   const [dress, setDress] = useState<DressWithBoutiqueDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,6 +108,39 @@ export default function DressDetailScreen({ route, navigation }: Props) {
   function handleModalScroll(x: number) {
     const idx = Math.round(x / SCREEN_W);
     if (idx !== activeIndex) setActiveIndex(idx);
+  }
+
+  function handleRemoveFromSaved() {
+    console.log('Remove from saved pressed...');
+    // Confirm before removing
+    try{
+      Alert.alert(
+        'Remove dress',
+        'Remove this dress from your saved list?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              const { data: sessionData } = await supabase.auth.getSession();
+              const userId = sessionData.session?.user.id;
+              if (!userId || !dress) return;
+              const { error } = await removeLikedDress(userId, dress.id);
+              if (error) {
+                logger.error('DressDetailScreen: failed to remove liked dress', error);
+                return;
+              }
+              navigation.goBack();
+            },
+          },
+        ]
+      );
+      console.log('Alert shown');
+    } catch (error) {
+      console.error('Error in handleRemoveFromSaved:', error);
+    }
+
   }
 
   return (
@@ -211,7 +250,7 @@ export default function DressDetailScreen({ route, navigation }: Props) {
         {/* ── Detail content ── */}
         <View style={styles.details}>
           {/* Title, badge & subtitle */}
-          <View style={styles.titleRow}>
+          <View style={styles.titleRow}>       
             <Text style={styles.title}>{dress.title}</Text>
             {hasTryOn && (
               <TouchableOpacity
@@ -231,6 +270,19 @@ export default function DressDetailScreen({ route, navigation }: Props) {
               </TouchableOpacity>
             )}
           </View>
+          {/* Remove from Saved — only shown when navigated from Saved stack */}
+          {fromSaved && (
+            <TouchableOpacity 
+              style={styles.removeButton} 
+              onPress={() => {
+                  console.log('BUTTON PRESSED');
+                  handleRemoveFromSaved();
+                  }
+                } 
+                activeOpacity={0.8}>
+              <Text style={styles.removeButtonText}>Remove from Saved Banana</Text>
+            </TouchableOpacity>
+          )}             
           {dress.subtitle ? <Text style={styles.subtitle}>{dress.subtitle}</Text> : null}
 
           {/* Price */}
@@ -289,6 +341,8 @@ export default function DressDetailScreen({ route, navigation }: Props) {
               <Text style={styles.description}>{dress.long_description}</Text>
             </View>
           ) : null}
+
+        
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -514,5 +568,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#CC3333',
     textAlign: 'center',
+  },
+  removeButton: {
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#CC3333',
+    alignItems: 'center',
+  },
+  removeButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#CC3333',
   },
 });

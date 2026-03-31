@@ -103,3 +103,12 @@ CONSTRAINT user_likes_pkey PRIMARY KEY (id),
 CONSTRAINT user_likes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
 CONSTRAINT user_likes_dress_id_fkey FOREIGN KEY (dress_id) REFERENCES public.dresses(id)
 );
+CREATE TABLE public.user_skips (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  dress_id uuid NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT user_skips_pkey PRIMARY KEY (id),
+  CONSTRAINT user_skips_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT user_skips_dress_id_fkey FOREIGN KEY (dress_id) REFERENCES public.dresses(id)
+);

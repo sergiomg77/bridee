@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, StyleSheet, SafeAreaView } from 'react-n
 
 import ScreenHeader from '../../components/shared/ScreenHeader';
 import DressCard from '../../components/discover/DressCard';
-import { fetchDresses, likeDress } from '../../services/dress/dressService';
+import { fetchDresses, likeDress, skipDress } from '../../services/dress/dressService';
 import { supabase } from '../../lib/supabase';
 import logger from '../../lib/logger';
 import { DressWithBoutique } from '../../types/dress';
@@ -24,7 +24,7 @@ export default function DiscoverScreen() {
         userIdRef.current = sessionData.session?.user.id ?? null;
       }
 
-      const { data, error } = await fetchDresses();
+      const { data, error } = await fetchDresses(userIdRef.current);
       if (error) {
         setErrorMessage(error.message);
       } else {
@@ -54,8 +54,21 @@ export default function DiscoverScreen() {
     setCurrentIndex((prev) => prev + 1);
   }
 
-  function handleSkip() {
-    logger.info('Dress skipped', { dressId: dresses[currentIndex]?.id });
+  async function handleSkip() {
+    const dress = dresses[currentIndex];
+    if (!dress) return;
+
+    logger.info('Dress skipped', { dressId: dress.id });
+
+    if (userIdRef.current) {
+      const { error } = await skipDress(userIdRef.current, dress.id);
+      if (error) {
+        logger.error('handleSkip: skipDress failed', error);
+      }
+    } else {
+      logger.warn('handleSkip: no userId, skipping skipDress call');
+    }
+
     setCurrentIndex((prev) => prev + 1);
   }
 
