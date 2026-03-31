@@ -65,9 +65,12 @@ details ARRAY,
 occasions ARRAY,
 style_tags ARRAY,
 consent_confirmed boolean NOT NULL DEFAULT false,
+is_deleted boolean NOT NULL DEFAULT false,
 created_at timestamp with time zone NOT NULL DEFAULT now(),
 CONSTRAINT dresses_pkey PRIMARY KEY (id)
 );
+-- Run in Supabase SQL Editor to add the column:
+-- ALTER TABLE dresses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false;
 CREATE TABLE public.profiles (
 id uuid NOT NULL,
 role text NOT NULL CHECK (role = ANY (ARRAY['bride'::text, 'boutique'::text])),

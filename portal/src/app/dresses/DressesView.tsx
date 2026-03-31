@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
-import { updateBoutiqueDress, type BoutiqueDressRow } from '@/services/dress';
+import { updateBoutiqueDress, softDeleteDress, type BoutiqueDressRow } from '@/services/dress';
 import logger from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
@@ -22,6 +22,20 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [rows, setRows] = useState<BoutiqueDressRow[]>(initialDresses);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(dressId: string) {
+    if (!confirm('Delete this dress? This cannot be undone.')) return;
+    setDeletingId(dressId);
+    const { error } = await softDeleteDress(supabase, dressId, boutiqueId);
+    if (error) {
+      logger.error('DressesView: soft delete failed', { dressId, error });
+      alert(`Failed to delete dress: ${error}`);
+    } else {
+      setRows((prev) => prev.filter((r) => r.dress_id !== dressId));
+    }
+    setDeletingId(null);
+  }
 
   async function handleToggleActive(row: BoutiqueDressRow) {
     setTogglingId(row.id);
@@ -98,49 +112,66 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
             const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
 
             return (
-              <Link
-                key={row.id}
-                href={`/dresses/${dress.id}`}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-[#C9A96E]/30 transition group"
-              >
-                {/* Photo */}
-                <div className="aspect-[3/4] bg-gray-50 overflow-hidden">
-                  {coverPath ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={getDressPhotoUrl(coverPath)}
-                      alt={dress.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">
-                      👗
-                    </div>
-                  )}
-                </div>
+              <div key={row.id} className="relative group">
+                <Link
+                  href={`/dresses/${dress.id}`}
+                  className="block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-[#C9A96E]/30 transition"
+                >
+                  {/* Photo */}
+                  <div className="aspect-[3/4] bg-gray-50 overflow-hidden">
+                    {coverPath ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={getDressPhotoUrl(coverPath)}
+                        alt={dress.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-3xl">
+                        👗
+                      </div>
+                    )}
+                  </div>
 
-                {/* Info */}
-                <div className="p-3">
-                  <p className="text-sm font-medium text-gray-800 truncate">{dress.title}</p>
-                  {dress.designer && (
-                    <p className="text-xs text-gray-400 truncate mt-0.5">{dress.designer}</p>
-                  )}
-                  {row.price !== null && (
-                    <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
-                      ${Number(row.price).toLocaleString()}
-                    </p>
-                  )}
-                  <span
-                    className={`mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                      row.is_active
-                        ? 'bg-green-50 text-green-600'
-                        : 'bg-gray-100 text-gray-400'
-                    }`}
-                  >
-                    {row.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-              </Link>
+                  {/* Info */}
+                  <div className="p-3">
+                    <p className="text-sm font-medium text-gray-800 truncate">{dress.title}</p>
+                    {dress.designer && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{dress.designer}</p>
+                    )}
+                    {row.price !== null && (
+                      <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
+                        ${Number(row.price).toLocaleString()}
+                      </p>
+                    )}
+                    <span
+                      className={`mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                        row.is_active
+                          ? 'bg-green-50 text-green-600'
+                          : 'bg-gray-100 text-gray-400'
+                      }`}
+                    >
+                      {row.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Delete button */}
+                <button
+                  onClick={() => handleDelete(dress.id)}
+                  disabled={deletingId === dress.id}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 text-red-400 hover:bg-red-50 hover:text-red-600 shadow-sm opacity-0 group-hover:opacity-100 transition disabled:opacity-50"
+                  title="Delete dress"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6" />
+                    <path d="M14 11v6" />
+                    <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                  </svg>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -287,6 +318,20 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                             : row.is_active
                             ? 'Deactivate'
                             : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(dress.id)}
+                          disabled={deletingId === dress.id}
+                          className="p-1.5 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 hover:text-red-600 transition disabled:opacity-50"
+                          title="Delete dress"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                          </svg>
                         </button>
                       </div>
                     </td>

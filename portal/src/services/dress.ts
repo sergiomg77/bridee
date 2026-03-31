@@ -218,6 +218,40 @@ export async function updateBoutiqueDress(
   return { data: row as BoutiqueDress, error: null };
 }
 
+export async function softDeleteDress(
+  supabase: SupabaseClient,
+  dressId: string,
+  boutiqueId: string
+): Promise<{ error: string | null }> {
+  // Confirm the dress belongs to this boutique before deleting
+  const { data: owned, error: checkError } = await supabase
+    .from('boutique_dresses')
+    .select('id')
+    .eq('dress_id', dressId)
+    .eq('boutique_id', boutiqueId)
+    .maybeSingle();
+
+  if (checkError) {
+    logger.error('softDeleteDress: ownership check failed', checkError);
+    return { error: checkError.message };
+  }
+  if (!owned) {
+    return { error: 'Dress not found or not owned by this boutique.' };
+  }
+
+  const { error } = await supabase
+    .from('dresses')
+    .update({ is_deleted: true })
+    .eq('id', dressId);
+
+  if (error) {
+    logger.error('softDeleteDress: update failed', error);
+    return { error: error.message };
+  }
+
+  return { error: null };
+}
+
 export async function fetchBoutiqueDresses(
   supabase: SupabaseClient,
   boutiqueId: string
@@ -246,6 +280,7 @@ export async function fetchBoutiqueDresses(
       )
     `)
     .eq('boutique_id', boutiqueId)
+    .eq('dresses.is_deleted', false)
     .order('created_at', { ascending: false });
 
   if (error) {

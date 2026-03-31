@@ -34,7 +34,8 @@ export async function fetchDresses(userId?: string | null): Promise<{ data: Dres
           dress_photos (id, path, sort_order, is_tryon_eligible)
         )
       `)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('dresses.is_deleted', false);
 
     if (excludedDressIds.length > 0) {
       query = query.not('dress_id', 'in', `(${excludedDressIds.join(',')})`);
@@ -88,7 +89,8 @@ export async function fetchLikedDresses(userId: string): Promise<{ data: DressWi
           )
         )
       `)
-      .eq('user_id', userId);
+      .eq('user_id', userId)
+      .eq('dresses.is_deleted', false);
 
     if (error) {
       logger.error('fetchLikedDresses failed', error);
@@ -121,6 +123,7 @@ export async function fetchDressById(dressId: string): Promise<{ data: DressWith
         )
       `)
       .eq('id', dressId)
+      .eq('is_deleted', false)
       .single();
 
     if (error) {
