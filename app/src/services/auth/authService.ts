@@ -78,6 +78,11 @@ export async function signInWithGoogle(): Promise<AuthResult> {
   }
 }
 
+export async function getCurrentUserEmail(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.email ?? null;
+}
+
 export async function signInWithApple(): Promise<AuthResult> {
   try {
     logger.info('signInWithApple called');

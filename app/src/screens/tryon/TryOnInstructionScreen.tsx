@@ -9,16 +9,17 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { StackScreenProps } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 import { supabase } from '../../lib/supabase';
 import logger from '../../lib/logger';
 import { addToTryOnQueue } from '../../services/tryon/tryonService';
-import { SavedStackParamList } from '../../types/navigation';
 
-type Props = StackScreenProps<SavedStackParamList, 'TryOnInstructionScreen'>;
+type Props = {
+  navigation: { goBack: () => void };
+  route: { params: { dressId: string; tryOnPhotoPath: string } };
+};
 
 // Attempt to load step instruction images.
 // Add step1.png, step2.png, step3.png to app/assets/tryon/ when ready.

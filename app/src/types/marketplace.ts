@@ -51,6 +51,10 @@ export interface VendorListing {
   packages: VendorPackage[];
   vendor_name: string;
   vendor_logo_path: string | null;
+  avg_rating?: number | null;
+  review_count?: number | null;
+  is_new?: boolean;
+  discount_percent?: number | null;
 }
 
 export interface SavedListing {

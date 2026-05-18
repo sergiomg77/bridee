@@ -11,6 +11,9 @@ export const API = {
     slots: (id: string) => `${BASE}/api/boutiques/${id}/slots`,
     save: (id: string) => `${BASE}/api/boutiques/${id}/save`,
     saved: () => `${BASE}/api/boutiques/saved`,
+    dresses: (id: string) => `${BASE}/api/boutiques/${id}/dresses`,
+    reviews: (id: string) => `${BASE}/api/boutiques/${id}/reviews`,
+    search: () => `${BASE}/api/boutiques/search`,
   },
   dresses: {
     feed: () => `${BASE}/api/dresses/feed`,
@@ -47,6 +50,8 @@ export const API = {
   },
   search: {
     dresses: () => `${BASE}/api/dresses/search`,
+    keywords: () => `${BASE}/api/search/keywords`,
+    boutiques: () => `${BASE}/api/boutiques/search`,
   },
   admin: {},
 } as const;

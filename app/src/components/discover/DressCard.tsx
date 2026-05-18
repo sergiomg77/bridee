@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,17 @@ import {
   StyleSheet,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { DressWithBoutique } from '../../types/dress';
-import { getDressPhotoUrl } from '../../lib/supabase';
+
+import type { BoutiqueDress } from '../../types/dress';
+import { getStorageUrl } from '../../utils/image';
+import { formatPrice } from '../../utils/currency';
+import { t } from '../../i18n';
 
 interface DressCardProps {
-  dress: DressWithBoutique;
+  dress: BoutiqueDress;
   onLike: () => void;
   onSkip: () => void;
+  onPress: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -24,9 +28,7 @@ const CARD_WIDTH = SCREEN_WIDTH - 32;
 const CARD_HEIGHT = CARD_WIDTH * 1.4;
 const SWIPE_THRESHOLD = 120;
 
-export default function DressCard({ dress, onLike, onSkip }: DressCardProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+export default function DressCard({ dress, onLike, onSkip, onPress }: DressCardProps) {
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
@@ -82,7 +84,7 @@ export default function DressCard({ dress, onLike, onSkip }: DressCardProps) {
       onPanResponderRelease: (_, g) => {
         const isTap = Math.abs(g.dx) < 5 && Math.abs(g.dy) < 5;
         if (isTap) {
-          setShowTooltip((prev) => !prev);
+          onPress();
           return;
         }
         if (g.dx > SWIPE_THRESHOLD) {
@@ -96,54 +98,43 @@ export default function DressCard({ dress, onLike, onSkip }: DressCardProps) {
     })
   ).current;
 
-  const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
-
-  const prices = dress.boutique_dresses.map((b) => b.price).filter((p): p is number => p !== null);
-  const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+  const coverPath = dress.photos.find((p) => p.sort_order === 0)?.path ?? null;
+  const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
+  const priceDisplay = dress.price_sale !== null
+    ? formatPrice(dress.price_sale, dress.price_currency)
+    : null;
 
   return (
     <Animated.View
-      style={[
-        styles.card,
-        { transform: [{ translateX }, { translateY }, { rotate }] },
-      ]}
+      style={[styles.card, { transform: [{ translateX }, { translateY }, { rotate }] }]}
       {...panResponder.panHandlers}
     >
-      {/* Swipe indicators */}
       <Animated.View style={[styles.swipeLabel, styles.swipeLabelLike, { opacity: likeOpacity }]}>
-        <Text style={styles.swipeLabelText}>LIKE</Text>
+        <Text style={styles.swipeLabelText}>{t('discover.like')}</Text>
       </Animated.View>
       <Animated.View style={[styles.swipeLabel, styles.swipeLabelSkip, { opacity: skipOpacity }]}>
-        <Text style={styles.swipeLabelText}>SKIP</Text>
+        <Text style={styles.swipeLabelText}>{t('discover.skip')}</Text>
       </Animated.View>
 
-      {/* Dress image */}
-      {getDressPhotoUrl(coverPath) !== 'no-image' ? (
-        <Image source={{ uri: getDressPhotoUrl(coverPath) }} style={styles.image} resizeMode="cover" />
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
       ) : (
         <View style={styles.imagePlaceholder} />
       )}
 
-      {/* Bottom gradient overlay */}
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.75)']}
         style={styles.gradient}
       >
-        <Text style={styles.title}>{dress.title}</Text>
-        <Text style={styles.subtitle}>{dress.subtitle}</Text>
-        {minPrice !== null && (
-          <Text style={styles.price}>From £{minPrice.toLocaleString()}</Text>
+        <Text style={styles.title}>{dress.dress.title}</Text>
+        {dress.dress.subtitle ? (
+          <Text style={styles.subtitle}>{dress.dress.subtitle}</Text>
+        ) : null}
+        {priceDisplay !== null && (
+          <Text style={styles.price}>{t('common.from')} {priceDisplay}</Text>
         )}
       </LinearGradient>
 
-      {/* Tap tooltip */}
-      {showTooltip && (
-        <View style={styles.tooltip}>
-          <Text style={styles.tooltipText}>Swipe right to like · Swipe left to skip</Text>
-        </View>
-      )}
-
-      {/* Action buttons */}
       <View style={styles.actions}>
         <TouchableOpacity style={[styles.actionButton, styles.skipButton]} onPress={swipeOffLeft} activeOpacity={0.8}>
           <Text style={styles.skipIcon}>✕</Text>
@@ -223,20 +214,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 2,
-  },
-  tooltip: {
-    position: 'absolute',
-    top: '45%',
-    alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  tooltipText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '500',
   },
   actions: {
     position: 'absolute',

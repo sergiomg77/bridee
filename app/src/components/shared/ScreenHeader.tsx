@@ -9,14 +9,27 @@ type Props = {
   showFilter?: boolean;
   onFilterPress?: () => void;
   onUserPress?: () => void;
+  showMessages?: boolean;
 };
 
-export default function ScreenHeader({ title, showFilter = false, onFilterPress, onUserPress }: Props) {
+export default function ScreenHeader({
+  title,
+  showFilter = false,
+  onFilterPress,
+  onUserPress,
+  showMessages = true,
+}: Props) {
   function handleUserPress() {
     if (onUserPress) {
       onUserPress();
     } else if (navigationRef.isReady()) {
       navigationRef.navigate('ProfileStack');
+    }
+  }
+
+  function handleMessagesPress() {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('MessagesStack');
     }
   }
 
@@ -27,6 +40,11 @@ export default function ScreenHeader({ title, showFilter = false, onFilterPress,
         {showFilter && (
           <TouchableOpacity style={styles.iconButton} onPress={onFilterPress} activeOpacity={0.7}>
             <Ionicons name="options-outline" size={22} color="#333" />
+          </TouchableOpacity>
+        )}
+        {showMessages && (
+          <TouchableOpacity style={styles.iconButton} onPress={handleMessagesPress} activeOpacity={0.7}>
+            <Ionicons name="chatbubble-outline" size={22} color="#333" />
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.iconButton} onPress={handleUserPress} activeOpacity={0.7}>
