@@ -1,0 +1,148 @@
+{
+  "auth": {
+    "sign_in": "Đăng nhập",
+    "sign_up": "Đăng ký",
+    "email": "Email",
+    "password": "Mật khẩu",
+    "forgot_password": "Quên mật khẩu?",
+    "continue_google": "Tiếp tục với Google",
+    "continue_apple": "Tiếp tục với Apple",
+    "email_sent": "Kiểm tra email của bạn",
+    "email_sent_subtitle": "Chúng tôi đã gửi liên kết xác nhận đến địa chỉ email của bạn."
+  },
+  "discover": {
+    "title": "Khám phá",
+    "empty_title": "Không còn váy nào",
+    "empty_subtitle": "Quay lại sau để xem váy mới",
+    "like": "THÍCH",
+    "skip": "BỎ QUA"
+  },
+  "saved": {
+    "title": "Váy đã lưu",
+    "empty_title": "Chưa có váy nào được lưu",
+    "empty_subtitle": "Vuốt phải những chiếc váy bạn yêu thích",
+    "filter": "Lọc"
+  },
+  "dress_detail": {
+    "about": "Về chiếc váy này",
+    "colour": "Màu sắc",
+    "sizes": "Kích thước có sẵn",
+    "available_at": "Có sẵn tại",
+    "try_on": "Thử đồ",
+    "remove_from_saved": "Xoá khỏi danh sách lưu",
+    "not_found": "Không tìm thấy váy.",
+    "remove_confirm_title": "Xoá váy",
+    "remove_confirm_message": "Xoá chiếc váy này khỏi danh sách đã lưu?",
+    "cancel": "Huỷ",
+    "remove": "Xoá",
+    "from_price": "Từ"
+  },
+  "tryon": {
+    "title": "Thử đồ",
+    "results_title": "Kết quả thử đồ",
+    "empty_title": "Chưa có lần thử nào",
+    "empty_subtitle": "Thử một chiếc váy để xem kết quả tại đây",
+    "view_dress": "Xem váy",
+    "instruction_title": "Thử đồ ảo",
+    "instruction_body": "Chúng tôi sẽ dùng AI để hiển thị chiếc váy trên bạn.",
+    "start": "Bắt đầu thử đồ"
+  },
+  "marketplace": {
+    "title": "Thị trường",
+    "empty_title": "Không tìm thấy dịch vụ",
+    "search_placeholder": "Tìm nhà cung cấp..."
+  },
+  "community": {
+    "title": "Cộng đồng",
+    "coming_soon": "Sắp ra mắt"
+  },
+  "messages": {
+    "title": "Tin nhắn",
+    "empty_title": "Chưa có cuộc trò chuyện",
+    "empty_subtitle": "Bắt đầu trò chuyện với một boutique",
+    "type_message": "Nhập tin nhắn...",
+    "send": "Gửi"
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "general_info": "Thông tin chung",
+    "bridal_dna": "Bridal DNA",
+    "share_story": "Chia sẻ câu chuyện của bạn",
+    "shopping_prefs": "Sở thích mua sắm",
+    "moodboard": "Tạo Moodboard",
+    "settings": "Cài đặt"
+  },
+  "general_info": {
+    "title": "Thông tin chung",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "saved": "Đã lưu",
+    "role": "Tôi là",
+    "first_name": "Họ",
+    "last_name": "Tên",
+    "city": "Thành phố",
+    "communication": "Kênh liên lạc ưu tiên",
+    "age": "Tuổi",
+    "wedding_date": "Ngày cưới",
+    "height": "Chiều cao (cm)",
+    "weight": "Cân nặng (kg)",
+    "body_shape": "Dáng người"
+  },
+  "bridal_dna": {
+    "title": "Bridal DNA",
+    "next": "Tiếp theo",
+    "done": "Hoàn thành",
+    "question_of": "trong"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "logout": "Đăng xuất",
+    "account": "Tài khoản",
+    "language": "Ngôn ngữ",
+    "notifications": "Thông báo"
+  },
+  "boutique": {
+    "profile_title": "Hồ sơ boutique",
+    "opening_hours": "Giờ mở cửa",
+    "services": "Dịch vụ",
+    "reviews": "Đánh giá",
+    "promotions": "Khuyến mãi",
+    "book_appointment": "Đặt lịch hẹn",
+    "save": "Lưu boutique",
+    "unsave": "Đã lưu"
+  },
+  "appointment": {
+    "title": "Đặt lịch hẹn",
+    "my_appointments": "Lịch hẹn của tôi",
+    "full_name": "Họ và tên",
+    "phone": "Số điện thoại",
+    "special_request": "Yêu cầu đặc biệt",
+    "guest_count": "Số khách",
+    "try_multiple": "Thử nhiều váy",
+    "confirm": "Xác nhận đặt lịch",
+    "cancel": "Huỷ lịch hẹn",
+    "status_pending": "Chờ xác nhận",
+    "status_confirmed": "Đã xác nhận",
+    "status_cancelled_bride": "Đã huỷ",
+    "status_cancelled_boutique": "Boutique đã huỷ"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã có lỗi xảy ra",
+    "try_again": "Thử lại",
+    "back": "Quay lại",
+    "close": "Đóng",
+    "done": "Xong",
+    "save": "Lưu",
+    "cancel": "Huỷ",
+    "confirm": "Xác nhận",
+    "delete": "Xoá",
+    "edit": "Chỉnh sửa",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "sort": "Sắp xếp",
+    "price": "Giá",
+    "from": "Từ",
+    "to": "Đến"
+  }
+}

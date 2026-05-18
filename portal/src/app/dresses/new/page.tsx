@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { createDress, createBoutiqueDress } from '@/services/dress';
+import { createDress, createBoutiqueDress, fetchCurrencies, type Currency } from '@/services/dress';
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
-const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess'];
-const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau'];
+const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess', 'Midi', 'Tea-length', 'Mini', 'Suit'];
+const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau', 'Portrait'];
 const SLEEVES = ['Sleeveless', 'Cap Sleeve', 'Short Sleeve', '3/4 Sleeve', 'Long Sleeve', 'Off-Shoulder'];
 const BACK_STYLES = ['Open Back', 'V-Back', 'Lace-Up', 'Zipper', 'Button Row', 'Illusion Back'];
 const LENGTHS = ['Mini', 'Knee', 'Tea', 'Ankle', 'Floor', 'Chapel', 'Cathedral'];
@@ -44,7 +44,11 @@ interface DressFormState {
   style_tags: string[];
   consent_confirmed: boolean;
   sku: string;
+  currency_id: string;
   price: string;
+  is_range: boolean;
+  range_pct: string;
+  rent_price: string;
   price_visible: boolean;
   available_sizes: string[];
   is_active: boolean;
@@ -71,7 +75,11 @@ const emptyForm: DressFormState = {
   style_tags: [],
   consent_confirmed: false,
   sku: '',
+  currency_id: '',
   price: '',
+  is_range: false,
+  range_pct: '',
+  rent_price: '',
   price_visible: true,
   available_sizes: [],
   is_active: false,
@@ -82,6 +90,7 @@ export default function NewDressPage() {
   const supabase = createClient();
 
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
@@ -130,6 +139,12 @@ export default function NewDressPage() {
         }
 
         setBoutiqueId(profile.boutique_id as string);
+
+        const loaded = await fetchCurrencies(supabase);
+        if (loaded.length) {
+          setCurrencies(loaded);
+          setForm((prev) => ({ ...prev, currency_id: prev.currency_id || String(loaded[0].id) }));
+        }
       } catch (err) {
         logger.error('NewDressPage: unexpected error during session load', err);
         setPageError('An unexpected error occurred.');
@@ -176,6 +191,12 @@ export default function NewDressPage() {
 
     setSaveLoading(true);
     setSaveError(null);
+
+    if (form.is_range && !form.price) {
+      setSaveError('A base price is required when using range pricing.');
+      setSaveLoading(false);
+      return;
+    }
 
     try {
       let coverPhotoPath: string | undefined;
@@ -231,10 +252,14 @@ export default function NewDressPage() {
 
       const { error: bdError } = await createBoutiqueDress(supabase, dress.id, boutiqueId, {
         sku: form.sku || undefined,
-        price: form.price ? parseFloat(form.price) : undefined,
+        price: form.price ? parseFloat(form.price) : null,
         price_visible: form.price_visible,
         available_sizes: form.available_sizes.length ? form.available_sizes : undefined,
         is_active: form.is_active,
+        is_range: form.is_range,
+        range_pct: form.is_range && form.range_pct ? parseInt(form.range_pct, 10) : null,
+        rent_price: form.rent_price ? parseFloat(form.rent_price) : null,
+        currency_id: form.currency_id ? parseInt(form.currency_id, 10) : null,
       });
 
       if (bdError) {
@@ -544,22 +569,74 @@ export default function NewDressPage() {
             <h3 className="text-base font-semibold text-gray-800 mb-6">Boutique Listing</h3>
             <div className="space-y-5">
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="sku" className={labelClass}>SKU</label>
+                <input
+                  id="sku" name="sku" type="text"
+                  value={form.sku} onChange={handleChange}
+                  placeholder="BD-2024-001"
+                  className={inputClass}
+                />
+              </div>
+
+              {/* ── Pricing ── */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pricing</p>
+
                 <div>
-                  <label htmlFor="sku" className={labelClass}>SKU</label>
+                  <label htmlFor="currency_id" className={labelClass}>Currency</label>
+                  <select
+                    id="currency_id" name="currency_id"
+                    value={form.currency_id} onChange={handleChange}
+                    className={selectClass}
+                  >
+                    {currencies.map((c) => (
+                      <option key={c.id} value={String(c.id)}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="price" className={labelClass}>Giá bán (Purchase Price)</label>
                   <input
-                    id="sku" name="sku" type="text"
-                    value={form.sku} onChange={handleChange}
-                    placeholder="BD-2024-001"
+                    id="price" name="price" type="number" min="0" step="1"
+                    value={form.price} onChange={handleChange}
+                    placeholder="0"
                     className={inputClass}
                   />
                 </div>
-                <div>
-                  <label htmlFor="price" className={labelClass}>Price</label>
+
+                <div className="flex items-center gap-3">
                   <input
-                    id="price" name="price" type="number" min="0" step="0.01"
-                    value={form.price} onChange={handleChange}
-                    placeholder="0.00"
+                    id="is_range" type="checkbox"
+                    checked={form.is_range}
+                    onChange={(e) => setForm((prev) => ({ ...prev, is_range: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#C9A96E] focus:ring-[#C9A96E]"
+                  />
+                  <label htmlFor="is_range" className="text-sm text-gray-700 cursor-pointer">
+                    Show as price range instead of exact price
+                  </label>
+                </div>
+
+                {form.is_range && (
+                  <div>
+                    <label htmlFor="range_pct" className={labelClass}>Range ± %</label>
+                    <input
+                      id="range_pct" name="range_pct" type="number" min="1" max="99" step="1"
+                      required={form.is_range}
+                      value={form.range_pct} onChange={handleChange}
+                      placeholder="e.g. 25 for ±25%"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="rent_price" className={labelClass}>Giá thuê (Rental Price) — optional</label>
+                  <input
+                    id="rent_price" name="rent_price" type="number" min="0" step="1"
+                    value={form.rent_price} onChange={handleChange}
+                    placeholder="0"
                     className={inputClass}
                   />
                 </div>

@@ -20,17 +20,56 @@ export interface Dress {
   train: string | null;
   color_name: string | null;
   color_code: string | null;
-  condition: string | null;
-  availability: string | null;
   fabric: string[] | null;
   details: string[] | null;
-  occasions: string[] | null;
   style_tags: string[] | null;
+  event_types: string[] | null;
+  condition: string | null;
+  availability: string | null;
+  additional_services: string[] | null;
   consent_confirmed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SwipeDirection = 'like' | 'skip';
+
+export interface SwipeRecord {
+  id: string;
+  user_id: string;
+  boutique_dress_id: string;
+  direction: SwipeDirection;
   created_at: string;
 }
 
+// v3 API response type — embeds dress and photos from the backend
 export interface BoutiqueDress {
+  id: string;
+  dress_id: string;
+  boutique_id: string;
+  sku: string | null;
+  price_sale: number | null;
+  price_original: number | null;
+  price_rental: number | null;
+  price_rental_original: number | null;
+  price_range_min: number | null;
+  price_range_max: number | null;
+  price_currency: string;
+  price_visible: boolean;
+  deal_price: number | null;
+  deal_percent: number | null;
+  deal_active: boolean;
+  available_sizes: string[] | null;
+  is_active: boolean;
+  dress: Dress;
+  photos: DressPhoto[];
+  boutique_name: string;
+  boutique_city: string;
+}
+
+// ── Legacy DB-level types (used by Supabase-direct queries in existing screens) ──
+
+export interface BoutiqueDressRow {
   id: string;
   dress_id: string;
   boutique_id: string;
@@ -41,18 +80,18 @@ export interface BoutiqueDress {
   is_active: boolean;
 }
 
-export interface DressWithBoutique extends Dress {
-  boutique_dresses: BoutiqueDress[];
-  dress_photos: DressPhoto[];
-}
-
 export interface Boutique {
   id: string;
   name: string;
 }
 
-export interface BoutiqueDressWithDetails extends BoutiqueDress {
+export interface BoutiqueDressWithDetails extends BoutiqueDressRow {
   boutiques: Boutique | null;
+}
+
+export interface DressWithBoutique extends Dress {
+  boutique_dresses: BoutiqueDressRow[];
+  dress_photos: DressPhoto[];
 }
 
 export interface DressWithBoutiqueDetails extends Dress {

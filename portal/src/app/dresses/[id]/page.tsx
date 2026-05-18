@@ -4,14 +4,14 @@ import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { updateDress, updateBoutiqueDress } from '@/services/dress';
+import { updateDress, updateBoutiqueDress, fetchCurrencies, type Currency } from '@/services/dress';
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
 
-const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess'];
-const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau'];
+const SILHOUETTES = ['A-Line', 'Ball Gown', 'Mermaid', 'Trumpet', 'Sheath', 'Empire', 'Princess', 'Midi', 'Tea-length', 'Mini', 'Suit'];
+const NECKLINES = ['V-Neck', 'Sweetheart', 'Off-Shoulder', 'Strapless', 'Illusion', 'Halter', 'Scoop', 'Square', 'Bateau', 'Portrait'];
 const SLEEVES = ['Sleeveless', 'Cap Sleeve', 'Short Sleeve', '3/4 Sleeve', 'Long Sleeve', 'Off-Shoulder'];
 const BACK_STYLES = ['Open Back', 'V-Back', 'Lace-Up', 'Zipper', 'Button Row', 'Illusion Back'];
 const LENGTHS = ['Mini', 'Knee', 'Tea', 'Ankle', 'Floor', 'Chapel', 'Cathedral'];
@@ -47,7 +47,11 @@ interface DressFormState {
   style_tags: string[];
   consent_confirmed: boolean;
   sku: string;
+  currency_id: string;
   price: string;
+  is_range: boolean;
+  range_pct: string;
+  rent_price: string;
   price_visible: boolean;
   available_sizes: string[];
   is_active: boolean;
@@ -67,6 +71,7 @@ export default function EditDressPage() {
 
   const [ids, setIds] = useState<LoadedIds | null>(null);
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [dressTitle, setDressTitle] = useState<string>('');
   const [photoCount, setPhotoCount] = useState<number>(0);
   const [pageLoading, setPageLoading] = useState(true);
@@ -93,7 +98,11 @@ export default function EditDressPage() {
     style_tags: [],
     consent_confirmed: false,
     sku: '',
+    currency_id: '',
     price: '',
+    is_range: false,
+    range_pct: '',
+    rent_price: '',
     price_visible: true,
     available_sizes: [],
     is_active: true,
@@ -150,8 +159,8 @@ export default function EditDressPage() {
         const bid = profile.boutique_id as string;
         setBoutiqueId(bid);
 
-        // Fetch dress, boutique_dress, cover photo, and photo count in parallel
-        const [dressResult, bdResult, photoResult, countResult] = await Promise.all([
+        // Fetch dress, boutique_dress, cover photo, photo count, and currencies in parallel
+        const [dressResult, bdResult, photoResult, countResult, loadedCurrencies] = await Promise.all([
           supabase
             .from('dresses')
             .select(
@@ -161,7 +170,7 @@ export default function EditDressPage() {
             .single(),
           supabase
             .from('boutique_dresses')
-            .select('id, sku, price, price_visible, available_sizes, is_active')
+            .select('id, sku, price, price_visible, available_sizes, is_active, is_range, range_pct, rent_price, currency_id')
             .eq('dress_id', dressId)
             .eq('boutique_id', bid)
             .single(),
@@ -175,6 +184,7 @@ export default function EditDressPage() {
             .from('dress_photos')
             .select('*', { count: 'exact', head: true })
             .eq('dress_id', dressId),
+          fetchCurrencies(supabase),
         ]);
 
         if (dressResult.error || !dressResult.data) {
@@ -224,6 +234,10 @@ export default function EditDressPage() {
           consent_confirmed: boolean;
         };
 
+        if (loadedCurrencies.length) {
+          setCurrencies(loadedCurrencies);
+        }
+
         const bd = bdResult.data as {
           id: string;
           sku: string | null;
@@ -231,6 +245,10 @@ export default function EditDressPage() {
           price_visible: boolean;
           available_sizes: string[] | null;
           is_active: boolean;
+          is_range: boolean;
+          range_pct: number | null;
+          rent_price: number | null;
+          currency_id: number | null;
         };
 
         setIds({ boutiqueDressId: bd.id });
@@ -257,7 +275,11 @@ export default function EditDressPage() {
           style_tags: dress.style_tags ?? [],
           consent_confirmed: dress.consent_confirmed,
           sku: bd.sku ?? '',
+          currency_id: bd.currency_id !== null ? String(bd.currency_id) : (loadedCurrencies[0] ? String(loadedCurrencies[0].id) : ''),
           price: bd.price !== null ? String(bd.price) : '',
+          is_range: bd.is_range ?? false,
+          range_pct: bd.range_pct !== null ? String(bd.range_pct) : '',
+          rent_price: bd.rent_price !== null ? String(bd.rent_price) : '',
           price_visible: bd.price_visible,
           available_sizes: bd.available_sizes ?? [],
           is_active: bd.is_active,
@@ -398,12 +420,22 @@ export default function EditDressPage() {
         return;
       }
 
+      if (form.is_range && !form.price) {
+        setSaveError('A base price is required when using range pricing.');
+        setSaveLoading(false);
+        return;
+      }
+
       const { error: bdError } = await updateBoutiqueDress(supabase, ids.boutiqueDressId, {
         sku: form.sku || undefined,
-        price: form.price ? parseFloat(form.price) : undefined,
+        price: form.price ? parseFloat(form.price) : null,
         price_visible: form.price_visible,
         available_sizes: form.available_sizes.length ? form.available_sizes : undefined,
         is_active: form.is_active,
+        is_range: form.is_range,
+        range_pct: form.is_range && form.range_pct ? parseInt(form.range_pct, 10) : null,
+        rent_price: form.rent_price ? parseFloat(form.rent_price) : null,
+        currency_id: form.currency_id ? parseInt(form.currency_id, 10) : null,
       });
 
       if (bdError) {
@@ -743,22 +775,74 @@ export default function EditDressPage() {
             <h3 className="text-base font-semibold text-gray-800 mb-6">Boutique Listing</h3>
             <div className="space-y-5">
 
-              <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="sku" className={labelClass}>SKU</label>
+                <input
+                  id="sku" name="sku" type="text"
+                  value={form.sku} onChange={handleChange}
+                  placeholder="BD-2024-001"
+                  className={inputClass}
+                />
+              </div>
+
+              {/* ── Pricing ── */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pricing</p>
+
                 <div>
-                  <label htmlFor="sku" className={labelClass}>SKU</label>
+                  <label htmlFor="currency_id" className={labelClass}>Currency</label>
+                  <select
+                    id="currency_id" name="currency_id"
+                    value={form.currency_id} onChange={handleChange}
+                    className={selectClass}
+                  >
+                    {currencies.map((c) => (
+                      <option key={c.id} value={String(c.id)}>{c.code} — {c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="price" className={labelClass}>Giá bán (Purchase Price)</label>
                   <input
-                    id="sku" name="sku" type="text"
-                    value={form.sku} onChange={handleChange}
-                    placeholder="BD-2024-001"
+                    id="price" name="price" type="number" min="0" step="1"
+                    value={form.price} onChange={handleChange}
+                    placeholder="0"
                     className={inputClass}
                   />
                 </div>
-                <div>
-                  <label htmlFor="price" className={labelClass}>Price</label>
+
+                <div className="flex items-center gap-3">
                   <input
-                    id="price" name="price" type="number" min="0" step="0.01"
-                    value={form.price} onChange={handleChange}
-                    placeholder="0.00"
+                    id="is_range" type="checkbox"
+                    checked={form.is_range}
+                    onChange={(e) => setForm((prev) => ({ ...prev, is_range: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 text-[#C9A96E] focus:ring-[#C9A96E]"
+                  />
+                  <label htmlFor="is_range" className="text-sm text-gray-700 cursor-pointer">
+                    Show as price range instead of exact price
+                  </label>
+                </div>
+
+                {form.is_range && (
+                  <div>
+                    <label htmlFor="range_pct" className={labelClass}>Range ± %</label>
+                    <input
+                      id="range_pct" name="range_pct" type="number" min="1" max="99" step="1"
+                      required={form.is_range}
+                      value={form.range_pct} onChange={handleChange}
+                      placeholder="e.g. 25 for ±25%"
+                      className={inputClass}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="rent_price" className={labelClass}>Giá thuê (Rental Price) — optional</label>
+                  <input
+                    id="rent_price" name="rent_price" type="number" min="0" step="1"
+                    value={form.rent_price} onChange={handleChange}
+                    placeholder="0"
                     className={inputClass}
                   />
                 </div>

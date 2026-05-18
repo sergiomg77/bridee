@@ -1,9 +1,12 @@
 import { supabase } from '../../lib/supabase';
 import logger from '../../lib/logger';
-import { Dress, DressPhoto, BoutiqueDress, DressWithBoutique, DressWithBoutiqueDetails } from '../../types/dress';
+import { BoutiqueDressRow, DressWithBoutique, DressWithBoutiqueDetails, Dress, DressPhoto, BoutiqueDress } from '../../types/dress';
+import { apiFetch } from '../api';
+import { API } from '../../constants/api';
 
-// Internal type for fetchDresses query rows
-type BoutiqueDressQueryRow = BoutiqueDress & {
+// ── Internal type for Supabase query rows ─────────────────────────────────────
+
+type BoutiqueDressQueryRow = BoutiqueDressRow & {
   dresses: (Dress & { dress_photos: DressPhoto[] }) | null;
 };
 
@@ -11,6 +14,8 @@ type UserLikeRow = {
   dress_id: string;
   dresses: DressWithBoutiqueDetails | null;
 };
+
+// ── Legacy Supabase-direct functions (used by existing screens) ───────────────
 
 export async function fetchDresses(userId?: string | null): Promise<{ data: DressWithBoutique[] | null; error: Error | null }> {
   try {
@@ -48,7 +53,6 @@ export async function fetchDresses(userId?: string | null): Promise<{ data: Dres
       return { data: null, error: new Error(error.message) };
     }
 
-    // Deduplicate: group boutique_dress rows by dress_id into DressWithBoutique[]
     const map = new Map<string, DressWithBoutique>();
     for (const row of (data as BoutiqueDressQueryRow[]) ?? []) {
       if (!row.dresses) continue;
@@ -196,4 +200,44 @@ export async function skipDress(userId: string, dressId: string): Promise<{ data
     logger.error('skipDress unexpected error', error);
     return { data: null, error };
   }
+}
+
+// ── v3 API functions ──────────────────────────────────────────────────────────
+
+export async function getFeed(
+  filters?: object
+): Promise<{ data: BoutiqueDress[] | null; error: string | null }> {
+  const qs = filters ? `?${new URLSearchParams(filters as Record<string, string>).toString()}` : '';
+  return apiFetch<BoutiqueDress[]>(API.dresses.feed() + qs, { method: 'GET' });
+}
+
+export async function getExplore(): Promise<{
+  data: {
+    trending: BoutiqueDress[];
+    top: BoutiqueDress[];
+    new_arrivals: BoutiqueDress[];
+    hot_deals: BoutiqueDress[];
+  } | null;
+  error: string | null;
+}> {
+  return apiFetch(API.dresses.explore(), { method: 'GET' });
+}
+
+export async function getDressDetail(
+  boutiqueDressId: string
+): Promise<{ data: BoutiqueDress | null; error: string | null }> {
+  return apiFetch<BoutiqueDress>(API.dresses.detail(boutiqueDressId), { method: 'GET' });
+}
+
+export async function getSimilar(
+  boutiqueDressId: string
+): Promise<{ data: BoutiqueDress[] | null; error: string | null }> {
+  return apiFetch<BoutiqueDress[]>(API.dresses.similar(boutiqueDressId), { method: 'GET' });
+}
+
+export async function searchDresses(
+  params: object
+): Promise<{ data: BoutiqueDress[] | null; error: string | null }> {
+  const qs = `?${new URLSearchParams(params as Record<string, string>).toString()}`;
+  return apiFetch<BoutiqueDress[]>(API.dresses.search() + qs, { method: 'GET' });
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { updateBoutiqueDress, softDeleteDress, type BoutiqueDressRow } from '@/services/dress';
+import { formatPrice } from '@/lib/formatPrice';
 import logger from '@/lib/logger';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
@@ -139,11 +140,15 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                     {dress.designer && (
                       <p className="text-xs text-gray-400 truncate mt-0.5">{dress.designer}</p>
                     )}
-                    {row.price !== null && (
-                      <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
-                        ${Number(row.price).toLocaleString()}
-                      </p>
-                    )}
+                    <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
+                      {formatPrice({
+                        price: row.price,
+                        is_range: row.is_range,
+                        range_pct: row.range_pct,
+                        rent_price: row.rent_price,
+                        symbol: row.currency?.symbol ?? '₫',
+                      })}
+                    </p>
                     <span
                       className={`mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         row.is_active
@@ -260,7 +265,13 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                     {/* Price */}
                     <td className="px-4 py-3 hidden md:table-cell">
                       <span className="text-[#C9A96E] font-medium">
-                        {row.price !== null ? `$${Number(row.price).toLocaleString()}` : '—'}
+                        {formatPrice({
+                          price: row.price,
+                          is_range: row.is_range,
+                          range_pct: row.range_pct,
+                          rent_price: row.rent_price,
+                          symbol: row.currency?.symbol ?? '₫',
+                        })}
                       </span>
                     </td>
 

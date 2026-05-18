@@ -1,0 +1,148 @@
+{
+  "auth": {
+    "sign_in": "Sign In",
+    "sign_up": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot password?",
+    "continue_google": "Continue with Google",
+    "continue_apple": "Continue with Apple",
+    "email_sent": "Check your email",
+    "email_sent_subtitle": "We sent a confirmation link to your email address."
+  },
+  "discover": {
+    "title": "Discover",
+    "empty_title": "No more dresses",
+    "empty_subtitle": "Check back soon for new arrivals",
+    "like": "LIKE",
+    "skip": "SKIP"
+  },
+  "saved": {
+    "title": "Saved Dresses",
+    "empty_title": "No saved dresses yet",
+    "empty_subtitle": "Swipe right on dresses you love",
+    "filter": "Filter"
+  },
+  "dress_detail": {
+    "about": "About this dress",
+    "colour": "Colour",
+    "sizes": "Available Sizes",
+    "available_at": "Available At",
+    "try_on": "Try it on",
+    "remove_from_saved": "Remove from Saved",
+    "not_found": "Dress not found.",
+    "remove_confirm_title": "Remove dress",
+    "remove_confirm_message": "Remove this dress from your saved list?",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "from_price": "From"
+  },
+  "tryon": {
+    "title": "Try On",
+    "results_title": "Try-On Results",
+    "empty_title": "No try-ons yet",
+    "empty_subtitle": "Try a dress to see your results here",
+    "view_dress": "View Dress",
+    "instruction_title": "Virtual Try-On",
+    "instruction_body": "We'll use AI to show you how this dress looks on you.",
+    "start": "Start Try-On"
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "empty_title": "No listings found",
+    "search_placeholder": "Search vendors..."
+  },
+  "community": {
+    "title": "Community",
+    "coming_soon": "Coming soon"
+  },
+  "messages": {
+    "title": "Messages",
+    "empty_title": "No conversations yet",
+    "empty_subtitle": "Start a conversation with a boutique",
+    "type_message": "Type a message...",
+    "send": "Send"
+  },
+  "profile": {
+    "title": "Profile",
+    "general_info": "General Information",
+    "bridal_dna": "Bridal DNA",
+    "share_story": "Share Your Story",
+    "shopping_prefs": "Shopping Preferences",
+    "moodboard": "Build Your Moodboard",
+    "settings": "Settings"
+  },
+  "general_info": {
+    "title": "General Information",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "role": "I am a",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "city": "City",
+    "communication": "Preferred Communication",
+    "age": "Age",
+    "wedding_date": "Wedding Date",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "body_shape": "Body Shape"
+  },
+  "bridal_dna": {
+    "title": "Bridal DNA",
+    "next": "Next",
+    "done": "Done",
+    "question_of": "of"
+  },
+  "settings": {
+    "title": "Settings",
+    "logout": "Log out",
+    "account": "Account",
+    "language": "Language",
+    "notifications": "Notifications"
+  },
+  "boutique": {
+    "profile_title": "Boutique Profile",
+    "opening_hours": "Opening Hours",
+    "services": "Services",
+    "reviews": "Reviews",
+    "promotions": "Promotions",
+    "book_appointment": "Book Appointment",
+    "save": "Save Boutique",
+    "unsave": "Saved"
+  },
+  "appointment": {
+    "title": "Book Appointment",
+    "my_appointments": "My Appointments",
+    "full_name": "Full Name",
+    "phone": "Phone",
+    "special_request": "Special Request",
+    "guest_count": "Number of Guests",
+    "try_multiple": "Try Multiple Dresses",
+    "confirm": "Confirm Booking",
+    "cancel": "Cancel Appointment",
+    "status_pending": "Pending",
+    "status_confirmed": "Confirmed",
+    "status_cancelled_bride": "Cancelled",
+    "status_cancelled_boutique": "Cancelled by Boutique"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "try_again": "Try again",
+    "back": "Back",
+    "close": "Close",
+    "done": "Done",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "price": "Price",
+    "from": "From",
+    "to": "To"
+  }
+}

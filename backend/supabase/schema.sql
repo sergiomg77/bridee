@@ -1,6 +1,13 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
--- Last updated: 2026-03-24
+-- Last updated: 2026-03-31
+CREATE TABLE public.currencies (
+id serial NOT NULL,
+code text NOT NULL,
+name text NOT NULL,
+symbol text NOT NULL,
+CONSTRAINT currencies_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.boutique_dresses (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
 dress_id uuid NOT NULL,
@@ -10,10 +17,15 @@ price numeric,
 price_visible boolean NOT NULL DEFAULT true,
 available_sizes ARRAY,
 is_active boolean NOT NULL DEFAULT true,
+is_range boolean NOT NULL DEFAULT false,
+range_pct integer,
+rent_price numeric,
+currency_id integer,
 created_at timestamp with time zone NOT NULL DEFAULT now(),
 CONSTRAINT boutique_dresses_pkey PRIMARY KEY (id),
 CONSTRAINT boutique_dresses_dress_id_fkey FOREIGN KEY (dress_id) REFERENCES public.dresses(id),
-CONSTRAINT boutique_dresses_boutique_id_fkey FOREIGN KEY (boutique_id) REFERENCES public.boutiques(id)
+CONSTRAINT boutique_dresses_boutique_id_fkey FOREIGN KEY (boutique_id) REFERENCES public.boutiques(id),
+CONSTRAINT boutique_dresses_currency_id_fkey FOREIGN KEY (currency_id) REFERENCES public.currencies(id)
 );
 CREATE TABLE public.boutiques (
 id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -71,6 +83,9 @@ CONSTRAINT dresses_pkey PRIMARY KEY (id)
 );
 -- Run in Supabase SQL Editor to add the column:
 -- ALTER TABLE dresses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT false;
+-- ─── Allowed Values Reference (text columns, not enums) ───────────────────────
+-- silhouette: A-Line, Ball Gown, Sheath, Fit-and-Flare, Trumpet, Mermaid, Separates, Jumpsuit, Empire, Midi, Tea-length, Mini, Suit
+-- neckline:   Boat (Bateau), Curve, Halter, High Neck, Off-the-Shoulder, One-Shoulder, Queen Anne, Scoop, Sheer/Illusion, Square, Straight, Sweetheart, V-Neck, Plunging, Cowl, Strapless, Portrait
 CREATE TABLE public.profiles (
 id uuid NOT NULL,
 role text NOT NULL CHECK (role = ANY (ARRAY['bride'::text, 'boutique'::text])),

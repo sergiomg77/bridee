@@ -1,20 +1,17 @@
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 
-export async function downloadFileAsBase64(
-  bucket: string,
-  path: string
-): Promise<{ data: string | null; error: Error | null }> {
+export async function downloadFileAsBase64(bucket: string, path: string): Promise<string> {
   const { data, error } = await supabase.storage.from(bucket).download(path);
 
-  if (error) {
-    logger.error(`Failed to download ${bucket}/${path}`, error);
-    return { data: null, error };
+  if (error || !data) {
+    const msg = `Failed to download ${bucket}/${path}: ${error?.message ?? 'no data returned'}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 
   const arrayBuffer = await data.arrayBuffer();
-  const base64 = Buffer.from(arrayBuffer).toString('base64');
-  return { data: base64, error: null };
+  return Buffer.from(arrayBuffer).toString('base64');
 }
 
 export async function uploadBase64File(
@@ -22,17 +19,18 @@ export async function uploadBase64File(
   path: string,
   base64: string,
   contentType: string
-): Promise<{ data: unknown; error: Error | null }> {
+): Promise<string> {
   const buffer = Buffer.from(base64, 'base64');
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(bucket)
-    .upload(path, buffer, { contentType });
+    .upload(path, buffer, { contentType, upsert: true });
 
   if (error) {
-    logger.error(`Failed to upload to ${bucket}/${path}`, error);
-    return { data: null, error };
+    const msg = `Failed to upload to ${bucket}/${path}: ${error.message}`;
+    logger.error(msg);
+    throw new Error(msg);
   }
 
-  return { data, error: null };
+  return path;
 }

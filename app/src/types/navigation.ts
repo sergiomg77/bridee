@@ -2,25 +2,42 @@ export type AuthStackParamList = {
   AuthScreen: undefined;
 };
 
+export type DiscoverStackParamList = {
+  DiscoverScreen: undefined;
+  DressDetailScreen: { boutiqueDressId: string };
+  BoutiqueProfileScreen: { boutiqueId: string };
+  TryOnInstructionScreen: { dressId: string; tryOnPhotoPath: string };
+};
+
+export type ExploreStackParamList = {
+  ExploreScreen: undefined;
+  DressDetailScreen: { boutiqueDressId: string };
+  BoutiqueProfileScreen: { boutiqueId: string };
+  TryOnInstructionScreen: { dressId: string; tryOnPhotoPath: string };
+};
+
 export type SavedStackParamList = {
   SavedScreen: undefined;
-  DressDetailScreen: { dressId: string; fromSaved?: boolean };
+  DressDetailScreen: { boutiqueDressId: string };
+  BoutiqueProfileScreen: { boutiqueId: string };
   TryOnInstructionScreen: { dressId: string; tryOnPhotoPath: string };
+  TryOnResultsScreen: undefined;
+  TryOnResultDetailScreen: { jobId: string; boutiqueDressId: string };
+  CompareScreen: { boutiqueDressIds: string[] };
 };
 
 export type TryOnStackParamList = {
   TryOnResultsScreen: undefined;
-  TryOnResultDetailScreen: { jobId: string; dressId: string };
-  DressDetailScreen: { dressId: string; fromSaved?: boolean };
+  TryOnResultDetailScreen: { jobId: string; boutiqueDressId: string };
+  DressDetailScreen: { boutiqueDressId: string };
 };
 
 export type AppTabParamList = {
-  Discover: undefined;
+  Home: undefined;
+  Explore: undefined;
   Saved: undefined;
-  TryOn: undefined;
   Marketplace: undefined;
   Community: undefined;
-  Messages: undefined;
 };
 
 export type ProfileStackParamList = {

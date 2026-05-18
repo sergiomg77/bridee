@@ -22,12 +22,21 @@ interface FormValues {
   tiktok: string;
 }
 
+const COUNTRIES = ['Vietnam'] as const;
+
+const VIETNAM_CITIES = [
+  'Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Can Tho', 'Hai Phong',
+  'Bien Hoa', 'Hue', 'Nha Trang', 'Da Lat', 'Vung Tau',
+  'Buon Ma Thuot', 'Thai Nguyen', 'Qui Nhon', 'Long Xuyen',
+  'My Tho', 'Nam Dinh', 'Vinh', 'Thanh Hoa', 'Rach Gia', 'Ca Mau',
+] as const;
+
 const emptyForm: FormValues = {
   name: '',
   description: '',
   address: '',
-  city: '',
-  country: '',
+  city: 'Hanoi',
+  country: 'Vietnam',
   phone: '',
   email: '',
   zalo: '',
@@ -106,8 +115,8 @@ export default function ProfilePage() {
           name: boutique.name ?? '',
           description: boutique.description ?? '',
           address: boutique.address ?? '',
-          city: boutique.city ?? '',
-          country: boutique.country ?? '',
+          city: boutique.city || 'Hanoi',
+          country: boutique.country || 'Vietnam',
           phone: boutique.phone ?? '',
           email: boutique.email ?? '',
           zalo: boutique.zalo ?? '',
@@ -139,7 +148,7 @@ export default function ProfilePage() {
   }, []);
 
   function handleChange(
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -357,28 +366,32 @@ export default function ProfilePage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="city" className={labelClass}>City</label>
-                  <input
-                    id="city"
-                    name="city"
-                    type="text"
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder="Ho Chi Minh City"
-                    className={inputClass}
-                  />
-                </div>
-                <div>
                   <label htmlFor="country" className={labelClass}>Country</label>
-                  <input
+                  <select
                     id="country"
                     name="country"
-                    type="text"
                     value={form.country}
                     onChange={handleChange}
-                    placeholder="Vietnam"
                     className={inputClass}
-                  />
+                  >
+                    {COUNTRIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="city" className={labelClass}>City</label>
+                  <select
+                    id="city"
+                    name="city"
+                    value={form.city}
+                    onChange={handleChange}
+                    className={inputClass}
+                  >
+                    {form.country === 'Vietnam' && VIETNAM_CITIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

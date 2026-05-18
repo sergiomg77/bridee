@@ -3,6 +3,13 @@ import logger from '@/lib/logger';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+export type Currency = {
+  id: number;
+  code: string;
+  name: string;
+  symbol: string;
+};
+
 /** Matches dresses table columns (no id / created_at). */
 export interface DressFormData {
   title: string;
@@ -29,10 +36,14 @@ export interface DressFormData {
 /** Matches boutique_dresses table columns (no id / dress_id / boutique_id / created_at). */
 export interface BoutiqueDressFormData {
   sku?: string;
-  price?: number;
+  price?: number | null;
   price_visible?: boolean;
   available_sizes?: string[];
   is_active?: boolean;
+  is_range?: boolean;
+  range_pct?: number | null;
+  rent_price?: number | null;
+  currency_id?: number | null;
 }
 
 export interface DressPhoto {
@@ -73,6 +84,10 @@ export interface BoutiqueDress {
   price_visible: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
+  is_range: boolean;
+  range_pct: number | null;
+  rent_price: number | null;
+  currency_id: number | null;
   created_at: string;
 }
 
@@ -84,6 +99,11 @@ export interface BoutiqueDressRow {
   price_visible: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
+  is_range: boolean;
+  range_pct: number | null;
+  rent_price: number | null;
+  currency_id: number | null;
+  currency: Currency | null;
   dresses: {
     id: string;
     title: string;
@@ -266,6 +286,11 @@ export async function fetchBoutiqueDresses(
       price_visible,
       available_sizes,
       is_active,
+      is_range,
+      range_pct,
+      rent_price,
+      currency_id,
+      currencies ( id, code, name, symbol ),
       dresses (
         id,
         title,
@@ -300,8 +325,29 @@ export async function fetchBoutiqueDresses(
     price_visible: row.price_visible,
     available_sizes: row.available_sizes,
     is_active: row.is_active,
+    is_range: row.is_range ?? false,
+    range_pct: row.range_pct ?? null,
+    rent_price: row.rent_price ?? null,
+    currency_id: row.currency_id ?? null,
+    currency: Array.isArray(row.currencies) ? (row.currencies[0] ?? null) : (row.currencies ?? null),
     dresses: Array.isArray(row.dresses) ? (row.dresses[0] ?? null) : row.dresses,
   }));
 
   return { data: rows, error: null };
+}
+
+export async function fetchCurrencies(
+  supabase: SupabaseClient
+): Promise<Currency[]> {
+  const { data, error } = await supabase
+    .from('currencies')
+    .select('id, code, name, symbol')
+    .order('id');
+
+  if (error) {
+    logger.error('fetchCurrencies: query failed', error);
+    return [];
+  }
+
+  return (data ?? []) as Currency[];
 }

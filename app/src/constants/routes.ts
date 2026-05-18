@@ -1,0 +1,28 @@
+export const ROUTES = {
+  Auth: 'Auth',
+  Onboarding: 'Onboarding',
+  ReferencePhoto: 'ReferencePhoto',
+  Home: 'Home',
+  Explore: 'Explore',
+  Search: 'Search',
+  SavedDresses: 'SavedDresses',
+  SavedBoutiques: 'SavedBoutiques',
+  Compare: 'Compare',
+  DressDetail: 'DressDetail',
+  BoutiqueProfile: 'BoutiqueProfile',
+  BookAppointment: 'BookAppointment',
+  Appointments: 'Appointments',
+  TryOn: 'TryOn',
+  TryOnResult: 'TryOnResult',
+  TryOnCollection: 'TryOnCollection',
+  Inbox: 'Inbox',
+  Conversation: 'Conversation',
+  MarketplaceHome: 'MarketplaceHome',
+  CategoryListing: 'CategoryListing',
+  VendorListing: 'VendorListing',
+  UserProfile: 'UserProfile',
+  EditProfile: 'EditProfile',
+  PromoCode: 'PromoCode',
+} as const;
+
+export type RouteKey = keyof typeof ROUTES;
