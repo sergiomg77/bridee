@@ -48,21 +48,21 @@ export default async function DashboardPage() {
   }
   if (!user) redirect('/login');
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('boutique_id')
-    .eq('id', user.id)
+  const { data: boutique, error: boutiqueError } = await supabase
+    .from('boutiques')
+    .select('id')
+    .eq('owner_user_id', user.id)
     .maybeSingle();
 
-  if (profileError) {
-    logger.error('DashboardPage: profiles query failed', profileError);
+  if (boutiqueError) {
+    logger.error('DashboardPage: boutiques query failed', boutiqueError);
     redirect('/login');
   }
-  if (!profile?.boutique_id) {
+  if (!boutique) {
     redirect('/onboarding');
   }
 
-  const boutiqueId = profile.boutique_id as string;
+  const boutiqueId = boutique.id as string;
   const today = new Date().toISOString().split('T')[0] as string;
 
   // Parallel fetch: active dress count, unread messages, upcoming appointments

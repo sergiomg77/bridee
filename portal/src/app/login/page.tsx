@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signIn } from '@/lib/auth';
+import { signIn, getSession } from '@/lib/auth';
 import logger from '@/lib/logger';
 
 export default function LoginPage() {
@@ -15,25 +15,33 @@ export default function LoginPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    console.log('[login] handleSubmit called', { email });
     setLoading(true);
     setError(null);
 
     try {
+      console.log('[login] calling signIn...');
       const { error: signInError } = await signIn(email, password);
+      console.log('[login] signIn result:', { error: signInError });
 
       if (signInError) {
-        console.error('[LoginPage] signIn error:', signInError);
+        console.error('[login] signIn error:', signInError);
         logger.error('LoginPage: sign in failed', { error: signInError });
         setError(signInError);
         setLoading(false);
         return;
       }
 
+      console.log('[login] signIn succeeded, fetching session...');
+      const session = await getSession();
+      console.log('[login] session:', session);
+
       logger.info('LoginPage: signed in');
+      console.log('[login] pushing to /dashboard...');
       router.push('/dashboard');
       router.refresh();
     } catch (err) {
-      console.error('[LoginPage] unexpected error:', err);
+      console.error('[login] unexpected error:', err);
       logger.error('LoginPage: unexpected error', err);
       setError('An unexpected error occurred. Please try again.');
       setLoading(false);
