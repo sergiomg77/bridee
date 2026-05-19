@@ -21,7 +21,7 @@ export async function POST(request: Request): Promise<Response> {
   const { email, password, inviteCode, businessName } = body;
 
   // 1. Validate invitation code
-  if (inviteCode !== process.env.BOUTIQUE_INVITE_CODE) {
+  if (inviteCode !== process.env.BRIDEE_BOUTIQUE_INVITE_CODE) {
     logger.warn('register route: invalid invitation code attempt', { email });
     return Response.json(
       { error: 'Invalid invitation code. Please contact Bridee.' },
@@ -49,10 +49,10 @@ export async function POST(request: Request): Promise<Response> {
 
   const userId = authData.user.id;
 
-  // 3. Insert profile row (role = boutique, boutique_id to be set after)
+  // 3. Insert profile row
   const { error: profileError } = await supabase
     .from('profiles')
-    .insert({ id: userId, role: 'boutique' });
+    .insert({ id: userId, full_name: businessName });
 
   if (profileError) {
     logger.error('register route: profiles insert failed', profileError);
@@ -62,11 +62,28 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // 4. Insert boutique row
+  // 4. Insert user_roles row
+  const { error: roleError } = await supabase
+    .from('user_roles')
+    .insert({ user_id: userId, role: 'boutique' });
+
+  if (roleError) {
+    logger.error('register route: user_roles insert failed', roleError);
+    return Response.json(
+      { error: 'Failed to assign user role.' },
+      { status: 500 }
+    );
+  }
+
+  // 5. Insert boutique row
   const boutiqueName = businessName?.trim() || email.split('@')[0];
+  const slug =
+    boutiqueName.toLowerCase().replace(/[^a-z0-9]+/g, '-') +
+    '-' +
+    userId.slice(0, 6);
   const { data: boutiqueData, error: boutiqueError } = await supabase
     .from('boutiques')
-    .insert({ name: boutiqueName, is_active: false })
+    .insert({ name: boutiqueName, owner_user_id: userId, slug, zalo: '', status: 'pending' })
     .select('id')
     .single();
 
@@ -74,20 +91,6 @@ export async function POST(request: Request): Promise<Response> {
     logger.error('register route: boutiques insert failed', boutiqueError);
     return Response.json(
       { error: 'Failed to create boutique record.' },
-      { status: 500 }
-    );
-  }
-
-  // 5. Link profile to boutique
-  const { error: profileUpdateError } = await supabase
-    .from('profiles')
-    .update({ boutique_id: boutiqueData.id })
-    .eq('id', userId);
-
-  if (profileUpdateError) {
-    logger.error('register route: profiles boutique_id update failed', profileUpdateError);
-    return Response.json(
-      { error: 'Failed to link profile to boutique.' },
       { status: 500 }
     );
   }
