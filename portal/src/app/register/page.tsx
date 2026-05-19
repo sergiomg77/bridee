@@ -43,6 +43,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    console.log('[register] inviteCode typed:', inviteCode, '| INVITE_CODE_CLIENT:', INVITE_CODE_CLIENT);
 
     if (!validate()) return;
 
