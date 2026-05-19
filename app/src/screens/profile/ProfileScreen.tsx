@@ -16,11 +16,15 @@ import { ProfileStackParamList } from '../../types/navigation';
 
 type Props = StackScreenProps<ProfileStackParamList, 'ProfileScreen'>;
 
+type ParamlessProfileScreen = {
+  [K in keyof ProfileStackParamList]: ProfileStackParamList[K] extends undefined ? K : never
+}[keyof ProfileStackParamList];
+
 type MenuItem = {
   label: string;
   subtitle: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  screen: keyof ProfileStackParamList;
+  screen: ParamlessProfileScreen;
 };
 
 const MENU: MenuItem[] = [

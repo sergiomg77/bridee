@@ -27,12 +27,17 @@ import CategoryListingScreen from '../screens/marketplace/CategoryListingScreen'
 import VendorListingScreen from '../screens/marketplace/VendorListingScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import UserProfileScreen from '../screens/profile/UserProfileScreen';
 import GeneralInformationScreen from '../screens/profile/GeneralInformationScreen';
 import BridalDNAScreen from '../screens/profile/BridalDNAScreen';
 import ShareYourStoryScreen from '../screens/profile/ShareYourStoryScreen';
 import ShoppingPreferencesScreen from '../screens/profile/ShoppingPreferencesScreen';
 import BuildYourMoodboardScreen from '../screens/profile/BuildYourMoodboardScreen';
 import SettingsScreen from '../screens/profile/SettingsScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
+import PromoCodeScreen from '../screens/profile/PromoCodeScreen';
+import AppointmentsScreen from '../screens/appointments/AppointmentsScreen';
+import SavedBoutiquesScreen from '../screens/boutique/SavedBoutiquesScreen';
 
 import type {
   AuthStackParamList,
@@ -143,7 +148,14 @@ function MessagesStack() {
 function ProfileStack() {
   return (
     <ProfileNav.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileNav.Screen name="UserProfileScreen" component={UserProfileScreen as React.ComponentType} />
       <ProfileNav.Screen name="ProfileScreen" component={ProfileScreen} />
+      <ProfileNav.Screen name="EditProfileScreen" component={EditProfileScreen as React.ComponentType} />
+      <ProfileNav.Screen name="PromoCodeScreen" component={PromoCodeScreen as React.ComponentType} />
+      <ProfileNav.Screen name="AppointmentsScreen" component={AppointmentsScreen as React.ComponentType} />
+      <ProfileNav.Screen name="SavedBoutiquesScreen" component={SavedBoutiquesScreen as React.ComponentType} />
+      <ProfileNav.Screen name="BoutiqueProfileScreen" component={BoutiqueProfileScreen as React.ComponentType} />
+      <ProfileNav.Screen name="BookAppointmentScreen" component={BookAppointmentScreen as React.ComponentType} />
       <ProfileNav.Screen name="GeneralInformationScreen" component={GeneralInformationScreen} />
       <ProfileNav.Screen name="BridalDNAScreen" component={BridalDNAScreen} />
       <ProfileNav.Screen name="ShareYourStoryScreen" component={ShareYourStoryScreen} />
