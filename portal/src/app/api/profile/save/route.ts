@@ -4,7 +4,7 @@ import logger from '@/lib/logger';
 
 interface SaveProfileBody {
   name?: string;
-  description?: string | null;
+  about?: string | null;
   address?: string | null;
   city?: string | null;
   country?: string | null;
@@ -15,8 +15,7 @@ interface SaveProfileBody {
   instagram?: string | null;
   facebook?: string | null;
   tiktok?: string | null;
-  logo_url?: string | null;
-  is_active?: boolean;
+  logo_path?: string | null;
 }
 
 export async function POST(request: Request): Promise<Response> {

@@ -3,7 +3,7 @@ import logger from '@/lib/logger';
 
 export interface BoutiqueUpdate {
   name?: string;
-  description?: string;
+  about?: string;
   address?: string;
   city?: string;
   country?: string;
@@ -14,14 +14,13 @@ export interface BoutiqueUpdate {
   instagram?: string;
   facebook?: string;
   tiktok?: string;
-  logo_url?: string;
-  is_active?: boolean;
+  logo_path?: string;
 }
 
 export interface Boutique {
   id: string;
   name: string;
-  description: string | null;
+  about: string | null;
   address: string | null;
   city: string | null;
   country: string | null;
@@ -32,8 +31,8 @@ export interface Boutique {
   instagram: string | null;
   facebook: string | null;
   tiktok: string | null;
-  logo_url: string | null;
-  is_active: boolean;
+  logo_path: string | null;
+  status: string;
   created_at: string;
 }
 

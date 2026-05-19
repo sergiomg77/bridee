@@ -5,6 +5,7 @@ interface RegisterRequestBody {
   email: string;
   password: string;
   inviteCode: string;
+  businessName?: string;
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -17,7 +18,7 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 });
   }
 
-  const { email, password, inviteCode } = body;
+  const { email, password, inviteCode, businessName } = body;
 
   // 1. Validate invitation code
   if (inviteCode !== process.env.BOUTIQUE_INVITE_CODE) {
@@ -61,8 +62,8 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // 4. Insert boutique row — use email prefix as placeholder name
-  const boutiqueName = email.split('@')[0];
+  // 4. Insert boutique row
+  const boutiqueName = businessName?.trim() || email.split('@')[0];
   const { data: boutiqueData, error: boutiqueError } = await supabase
     .from('boutiques')
     .insert({ name: boutiqueName, is_active: false })

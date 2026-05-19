@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
@@ -11,6 +10,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: ReactNode;
+  badge?: number;
   comingSoon?: boolean;
 }
 
@@ -18,49 +18,14 @@ function isNavActive(itemHref: string, pathname: string): boolean {
   if (itemHref === '/dresses') {
     return pathname === '/dresses' || pathname.startsWith('/dresses/');
   }
+  if (itemHref === '/appointments') {
+    return pathname === '/appointments' || pathname.startsWith('/appointments/');
+  }
+  if (itemHref === '/inbox') {
+    return pathname === '/inbox' || pathname.startsWith('/inbox/');
+  }
   return pathname === itemHref;
 }
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    href: '/dashboard',
-    label: 'Dashboard',
-    icon: (
-      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-        <path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2.5A2.25 2.25 0 0 0 4.25 9h2.5A2.25 2.25 0 0 0 9 6.75v-2.5A2.25 2.25 0 0 0 6.75 2h-2.5Zm0 9A2.25 2.25 0 0 0 2 13.25v2.5A2.25 2.25 0 0 0 4.25 18h2.5A2.25 2.25 0 0 0 9 15.75v-2.5A2.25 2.25 0 0 0 6.75 11h-2.5Zm6.5-9A2.25 2.25 0 0 0 8.5 4.25v2.5A2.25 2.25 0 0 0 10.75 9h2.5A2.25 2.25 0 0 0 15.5 6.75v-2.5A2.25 2.25 0 0 0 13.25 2h-2.5Zm0 9a2.25 2.25 0 0 0-2.25 2.25v2.5a2.25 2.25 0 0 0 2.25 2.25h2.5a2.25 2.25 0 0 0 2.25-2.25v-2.5a2.25 2.25 0 0 0-2.25-2.25h-2.5Z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-  {
-    href: '/profile',
-    label: 'Profile',
-    icon: (
-      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-        <path fillRule="evenodd" d="M9.293 2.293a1 1 0 0 1 1.414 0l7 7A1 1 0 0 1 17 11h-1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6H3a1 1 0 0 1-.707-1.707l7-7ZM8 17h4v-4H8v4Z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dresses',
-    label: 'Dress Catalog',
-    icon: (
-      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-        <path fillRule="evenodd" d="M5.5 3A2.5 2.5 0 0 0 3 5.5v2.879a2.5 2.5 0 0 0 .732 1.767l6.5 6.5a2.5 2.5 0 0 0 3.536 0l2.878-2.878a2.5 2.5 0 0 0 0-3.536l-6.5-6.5A2.5 2.5 0 0 0 8.38 3H5.5ZM6 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-      </svg>
-    ),
-  },
-  {
-    href: '/leads',
-    label: 'Leads',
-    icon: (
-      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-        <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
-        <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
-      </svg>
-    ),
-    comingSoon: true,
-  },
-];
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -68,12 +33,109 @@ export default function Sidebar() {
   const supabase = createClient();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [signOutLoading, setSignOutLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (window.innerWidth < 1024) {
-      setIsCollapsed(true);
-    }
+    if (window.innerWidth < 1024) setIsCollapsed(true);
   }, []);
+
+  useEffect(() => {
+    async function fetchUnread() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { count, error } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('is_read', false)
+          .neq('sender_user_id', user.id);
+
+        if (error) {
+          logger.error('Sidebar: unread count fetch failed', error);
+          return;
+        }
+
+        setUnreadCount(count ?? 0);
+      } catch (err) {
+        logger.error('Sidebar: unexpected error fetching unread count', err);
+      }
+    }
+
+    void fetchUnread();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  const NAV_ITEMS: NavItem[] = [
+    {
+      href: '/dashboard',
+      label: 'Dashboard',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2.5A2.25 2.25 0 0 0 4.25 9h2.5A2.25 2.25 0 0 0 9 6.75v-2.5A2.25 2.25 0 0 0 6.75 2h-2.5Zm0 9A2.25 2.25 0 0 0 2 13.25v2.5A2.25 2.25 0 0 0 4.25 18h2.5A2.25 2.25 0 0 0 9 15.75v-2.5A2.25 2.25 0 0 0 6.75 11h-2.5Zm6.5-9A2.25 2.25 0 0 0 8.5 4.25v2.5A2.25 2.25 0 0 0 10.75 9h2.5A2.25 2.25 0 0 0 15.5 6.75v-2.5A2.25 2.25 0 0 0 13.25 2h-2.5Zm0 9a2.25 2.25 0 0 0-2.25 2.25v2.5a2.25 2.25 0 0 0 2.25 2.25h2.5a2.25 2.25 0 0 0 2.25-2.25v-2.5a2.25 2.25 0 0 0-2.25-2.25h-2.5Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+    {
+      href: '/profile',
+      label: 'My Profile',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path fillRule="evenodd" d="M9.293 2.293a1 1 0 0 1 1.414 0l7 7A1 1 0 0 1 17 11h-1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6H3a1 1 0 0 1-.707-1.707l7-7ZM8 17h4v-4H8v4Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+    {
+      href: '/dresses',
+      label: 'Dress Catalog',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path fillRule="evenodd" d="M5.5 3A2.5 2.5 0 0 0 3 5.5v2.879a2.5 2.5 0 0 0 .732 1.767l6.5 6.5a2.5 2.5 0 0 0 3.536 0l2.878-2.878a2.5 2.5 0 0 0 0-3.536l-6.5-6.5A2.5 2.5 0 0 0 8.38 3H5.5ZM6 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+    {
+      href: '/appointments',
+      label: 'Appointments',
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path fillRule="evenodd" d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+    {
+      href: '/inbox',
+      label: 'Inbox',
+      badge: unreadCount,
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
+          <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
+        </svg>
+      ),
+    },
+    {
+      href: '/packages',
+      label: 'Packages',
+      comingSoon: true,
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path d="M2 3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2Z" />
+          <path fillRule="evenodd" d="M2 7.5h16l-.811 7.71a2 2 0 0 1-1.99 1.79H4.802a2 2 0 0 1-1.99-1.79L2 7.5ZM7 11a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2H8a1 1 0 0 1-1-1Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+    {
+      href: '/settings',
+      label: 'Account Settings',
+      comingSoon: true,
+      icon: (
+        <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+          <path fillRule="evenodd" d="M7.84 1.804A1 1 0 0 1 8.82 1h2.36a1 1 0 0 1 .98.804l.331 1.652a6.993 6.993 0 0 1 1.929 1.115l1.598-.54a1 1 0 0 1 1.186.447l1.18 2.044a1 1 0 0 1-.205 1.251l-1.267 1.113a7.047 7.047 0 0 1 0 2.228l1.267 1.113a1 1 0 0 1 .206 1.25l-1.18 2.045a1 1 0 0 1-1.187.447l-1.598-.54a6.993 6.993 0 0 1-1.929 1.115l-.33 1.652a1 1 0 0 1-.98.804H8.82a1 1 0 0 1-.98-.804l-.331-1.652a6.993 6.993 0 0 1-1.929-1.115l-1.598.54a1 1 0 0 1-1.186-.447l-1.18-2.044a1 1 0 0 1 .205-1.251l1.267-1.114a7.05 7.05 0 0 1 0-2.227L1.821 7.773a1 1 0 0 1-.206-1.25l1.18-2.045a1 1 0 0 1 1.187-.447l1.598.54A6.992 6.992 0 0 1 7.51 3.456l.33-1.652ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+        </svg>
+      ),
+    },
+  ];
 
   async function handleSignOut() {
     setSignOutLoading(true);
@@ -164,8 +226,22 @@ export default function Sidebar() {
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
               }`}
             >
-              {item.icon}
-              {!isCollapsed && <span className="flex-1">{item.label}</span>}
+              <span className="relative flex-shrink-0">
+                {item.icon}
+                {item.badge != null && item.badge > 0 && isCollapsed && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
+                )}
+              </span>
+              {!isCollapsed && (
+                <>
+                  <span className="flex-1">{item.label}</span>
+                  {item.badge != null && item.badge > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-500 text-white min-w-[18px] text-center">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </span>
+                  )}
+                </>
+              )}
             </Link>
           );
         })}
@@ -186,7 +262,7 @@ export default function Sidebar() {
             <path fillRule="evenodd" d="M19 10a.75.75 0 0 0-.75-.75H8.704l1.048-.943a.75.75 0 1 0-1.004-1.114l-2.5 2.25a.75.75 0 0 0 0 1.114l2.5 2.25a.75.75 0 1 0 1.004-1.114l-1.048-.943h9.546A.75.75 0 0 0 19 10Z" clipRule="evenodd" />
           </svg>
           {!isCollapsed && (
-            <span>{signOutLoading ? 'Signing out…' : 'Sign Out'}</span>
+            <span>{signOutLoading ? 'Signing out…' : 'Log Out'}</span>
           )}
         </button>
       </div>

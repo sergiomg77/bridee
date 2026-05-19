@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase';
 import { updateBoutiqueDress, softDeleteDress, type BoutiqueDressRow } from '@/services/dress';
@@ -13,6 +13,8 @@ function getDressPhotoUrl(path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/dress-photos/${path}`;
 }
 
+type FilterTab = 'all' | 'active' | 'inactive';
+
 interface DressesViewProps {
   dresses: BoutiqueDressRow[];
   boutiqueId: string;
@@ -21,9 +23,38 @@ interface DressesViewProps {
 export default function DressesView({ dresses: initialDresses, boutiqueId }: DressesViewProps) {
   const supabase = createClient();
   const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [filter, setFilter] = useState<FilterTab>('all');
+  const [search, setSearch] = useState('');
   const [rows, setRows] = useState<BoutiqueDressRow[]>(initialDresses);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const filtered = useMemo(() => {
+    let result = rows;
+
+    if (filter === 'active') result = result.filter((r) => r.is_active);
+    if (filter === 'inactive') result = result.filter((r) => !r.is_active);
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((r) => {
+        const title = r.dresses?.title.toLowerCase() ?? '';
+        const sku = (r.sku ?? '').toLowerCase();
+        return title.includes(q) || sku.includes(q);
+      });
+    }
+
+    return result;
+  }, [rows, filter, search]);
+
+  const counts = useMemo(
+    () => ({
+      all: rows.length,
+      active: rows.filter((r) => r.is_active).length,
+      inactive: rows.filter((r) => !r.is_active).length,
+    }),
+    [rows]
+  );
 
   async function handleDelete(dressId: string) {
     if (!confirm('Delete this dress? This cannot be undone.')) return;
@@ -54,60 +85,102 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
     setTogglingId(null);
   }
 
-  const btnBase =
-    'px-3 py-1.5 rounded-lg text-xs font-medium transition';
+  const FILTER_TABS: { key: FilterTab; label: string }[] = [
+    { key: 'all', label: `All (${counts.all})` },
+    { key: 'active', label: `Active (${counts.active})` },
+    { key: 'inactive', label: `Inactive (${counts.inactive})` },
+  ];
+
+  const btnBase = 'px-3 py-1.5 rounded-lg text-xs font-medium transition';
 
   return (
     <div>
-      {/* Toolbar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1">
-          <button
-            onClick={() => setView('grid')}
-            className={`${btnBase} ${
-              view === 'grid'
-                ? 'bg-[#C9A96E] text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Grid
-          </button>
-          <button
-            onClick={() => setView('list')}
-            className={`${btnBase} ${
-              view === 'list'
-                ? 'bg-[#C9A96E] text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            List
-          </button>
+      {/* ── Toolbar ───────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        {/* Filter tabs */}
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1 self-start">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`${btnBase} ${
+                filter === tab.key
+                  ? 'bg-[#C9A96E] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <Link
-          href="/dresses/new"
-          className="px-5 py-2.5 rounded-xl bg-[#C9A96E] text-white text-sm font-semibold hover:bg-[#b8945a] transition"
-        >
-          + Add Dress
-        </Link>
-      </div>
+        {/* Search */}
+        <div className="flex-1 max-w-sm">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or SKU…"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C9A96E] focus:border-transparent transition"
+          />
+        </div>
 
-      {rows.length === 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-          <p className="text-gray-400 text-sm">No dresses yet.</p>
+        <div className="flex items-center gap-2 ml-auto">
+          {/* Grid / List toggle */}
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl p-1">
+            <button
+              onClick={() => setView('grid')}
+              className={`${btnBase} ${
+                view === 'grid'
+                  ? 'bg-[#C9A96E] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Grid
+            </button>
+            <button
+              onClick={() => setView('list')}
+              className={`${btnBase} ${
+                view === 'list'
+                  ? 'bg-[#C9A96E] text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              List
+            </button>
+          </div>
+
           <Link
             href="/dresses/new"
-            className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-[#C9A96E] text-white text-sm font-semibold hover:bg-[#b8945a] transition"
+            className="px-5 py-2.5 rounded-xl bg-[#C9A96E] text-white text-sm font-semibold hover:bg-[#b8945a] transition"
           >
-            Add your first dress
+            + Add Dress
           </Link>
+        </div>
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+          {rows.length === 0 ? (
+            <>
+              <p className="text-gray-400 text-sm">No dresses yet.</p>
+              <Link
+                href="/dresses/new"
+                className="mt-4 inline-block px-5 py-2.5 rounded-xl bg-[#C9A96E] text-white text-sm font-semibold hover:bg-[#b8945a] transition"
+              >
+                Add your first dress
+              </Link>
+            </>
+          ) : (
+            <p className="text-gray-400 text-sm">No dresses match your search.</p>
+          )}
         </div>
       )}
 
-      {/* ─── Grid view ─────────────────────────────────────────────── */}
-      {view === 'grid' && rows.length > 0 && (
+      {/* ─── Grid view ───────────────────────────────────────── */}
+      {view === 'grid' && filtered.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {rows.map((row) => {
+          {filtered.map((row) => {
             const dress = row.dresses;
             if (!dress) return null;
             const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
@@ -118,7 +191,6 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                   href={`/dresses/${dress.id}`}
                   className="block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md hover:border-[#C9A96E]/30 transition"
                 >
-                  {/* Photo */}
                   <div className="aspect-[3/4] bg-gray-50 overflow-hidden">
                     {coverPath ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -133,22 +205,24 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                       </div>
                     )}
                   </div>
-
-                  {/* Info */}
                   <div className="p-3">
                     <p className="text-sm font-medium text-gray-800 truncate">{dress.title}</p>
                     {dress.designer && (
                       <p className="text-xs text-gray-400 truncate mt-0.5">{dress.designer}</p>
                     )}
-                    <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
-                      {formatPrice({
-                        price: row.price,
-                        is_range: row.is_range,
-                        range_pct: row.range_pct,
-                        rent_price: row.rent_price,
-                        symbol: row.currency?.symbol ?? '₫',
-                      })}
-                    </p>
+                    {row.price_visible && (
+                      <p className="text-xs text-[#C9A96E] font-medium mt-0.5">
+                        {formatPrice({
+                          price_sale: row.price_sale,
+                          price_range_min: row.price_range_min,
+                          price_range_max: row.price_range_max,
+                          price_rental: row.price_rental,
+                          deal_price: row.deal_price,
+                          deal_active: row.deal_active,
+                          price_currency: row.price_currency,
+                        })}
+                      </p>
+                    )}
                     <span
                       className={`mt-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         row.is_active
@@ -161,7 +235,6 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                   </div>
                 </Link>
 
-                {/* Delete button */}
                 <button
                   onClick={() => handleDelete(dress.id)}
                   disabled={deletingId === dress.id}
@@ -171,8 +244,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="3 6 5 6 21 6" />
                     <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                    <path d="M10 11v6" />
-                    <path d="M14 11v6" />
+                    <path d="M10 11v6" /><path d="M14 11v6" />
                     <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                   </svg>
                 </button>
@@ -182,131 +254,89 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
         </div>
       )}
 
-      {/* ─── List view ─────────────────────────────────────────────── */}
-      {view === 'list' && rows.length > 0 && (
+      {/* ─── List view ───────────────────────────────────────── */}
+      {view === 'list' && filtered.length > 0 && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left">
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider w-14">
-                  Photo
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">
-                  Color
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">
-                  Price
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">
-                  Sizes
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider w-14">Photo</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Title</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Color</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Price</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Sizes</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-xs font-medium text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {rows.map((row) => {
+              {filtered.map((row) => {
                 const dress = row.dresses;
                 if (!dress) return null;
                 const coverPath = dress.dress_photos.find((p) => p.sort_order === 0)?.path ?? null;
 
                 return (
                   <tr key={row.id} className="hover:bg-gray-50/50 transition">
-                    {/* Thumbnail */}
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
                         {coverPath ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={getDressPhotoUrl(coverPath)}
-                            alt={dress.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={getDressPhotoUrl(coverPath)} alt={dress.title} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">
-                            👗
-                          </div>
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-sm">👗</div>
                         )}
                       </div>
                     </td>
-
-                    {/* Title + Designer */}
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-800 truncate max-w-[180px]">
-                        {dress.title}
-                      </p>
+                      <p className="font-medium text-gray-800 truncate max-w-[180px]">{dress.title}</p>
                       {dress.designer && (
-                        <p className="text-xs text-gray-400 truncate max-w-[180px]">
-                          {dress.designer}
-                        </p>
+                        <p className="text-xs text-gray-400 truncate max-w-[180px]">{dress.designer}</p>
                       )}
+                      {row.sku && <p className="text-xs text-gray-300 mt-0.5">{row.sku}</p>}
                     </td>
-
-                    {/* Color */}
                     <td className="px-4 py-3 hidden md:table-cell">
                       <div className="flex items-center gap-2">
                         {dress.color_code && (
-                          <div
-                            className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0"
-                            style={{ backgroundColor: dress.color_code }}
-                          />
+                          <div className="w-4 h-4 rounded-full border border-gray-200 flex-shrink-0" style={{ backgroundColor: dress.color_code }} />
                         )}
                         <span className="text-gray-600 text-xs">{dress.color_name ?? '—'}</span>
                       </div>
                     </td>
-
-                    {/* Price */}
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-[#C9A96E] font-medium">
-                        {formatPrice({
-                          price: row.price,
-                          is_range: row.is_range,
-                          range_pct: row.range_pct,
-                          rent_price: row.rent_price,
-                          symbol: row.currency?.symbol ?? '₫',
-                        })}
-                      </span>
+                      {row.price_visible ? (
+                        <span className="text-[#C9A96E] font-medium">
+                          {formatPrice({
+                            price_sale: row.price_sale,
+                            price_range_min: row.price_range_min,
+                            price_range_max: row.price_range_max,
+                            price_rental: row.price_rental,
+                            deal_price: row.deal_price,
+                            deal_active: row.deal_active,
+                            price_currency: row.price_currency,
+                          })}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">Hidden</span>
+                      )}
                     </td>
-
-                    {/* Sizes */}
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {row.available_sizes?.length ? (
                           row.available_sizes.map((s) => (
-                            <span
-                              key={s}
-                              className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs"
-                            >
-                              {s}
-                            </span>
+                            <span key={s} className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs">{s}</span>
                           ))
                         ) : (
                           <span className="text-gray-400 text-xs">—</span>
                         )}
                       </div>
                     </td>
-
-                    {/* Status */}
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
-                          row.is_active
-                            ? 'bg-green-50 text-green-600'
-                            : 'bg-gray-100 text-gray-400'
-                        }`}
-                      >
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${
+                        row.is_active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'
+                      }`}>
                         {row.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-
-                    {/* Actions */}
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
@@ -324,11 +354,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                               : 'border-green-200 text-green-500 hover:bg-green-50'
                           }`}
                         >
-                          {togglingId === row.id
-                            ? '…'
-                            : row.is_active
-                            ? 'Deactivate'
-                            : 'Activate'}
+                          {togglingId === row.id ? '…' : row.is_active ? 'Deactivate' : 'Activate'}
                         </button>
                         <button
                           onClick={() => handleDelete(dress.id)}
@@ -339,8 +365,7 @@ export default function DressesView({ dresses: initialDresses, boutiqueId }: Dre
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
+                            <path d="M10 11v6" /><path d="M14 11v6" />
                             <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                           </svg>
                         </button>

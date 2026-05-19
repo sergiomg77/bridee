@@ -3,14 +3,7 @@ import logger from '@/lib/logger';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-export type Currency = {
-  id: number;
-  code: string;
-  name: string;
-  symbol: string;
-};
-
-/** Matches dresses table columns (no id / created_at). */
+/** Matches dresses table v3 columns. */
 export interface DressFormData {
   title: string;
   subtitle?: string;
@@ -28,22 +21,28 @@ export interface DressFormData {
   availability?: string;
   fabric?: string[];
   details?: string[];
-  occasions?: string[];
   style_tags?: string[];
+  event_types?: string[];
+  additional_services?: string[];
   consent_confirmed?: boolean;
 }
 
-/** Matches boutique_dresses table columns (no id / dress_id / boutique_id / created_at). */
+/** Matches boutique_dresses table v3 columns. */
 export interface BoutiqueDressFormData {
   sku?: string;
-  price?: number | null;
+  price_sale?: number | null;
+  price_original?: number | null;
+  price_rental?: number | null;
+  price_rental_original?: number | null;
+  price_range_min?: number | null;
+  price_range_max?: number | null;
+  price_currency?: string;
   price_visible?: boolean;
+  deal_price?: number | null;
+  deal_percent?: number | null;
+  deal_active?: boolean;
   available_sizes?: string[];
   is_active?: boolean;
-  is_range?: boolean;
-  range_pct?: number | null;
-  rent_price?: number | null;
-  currency_id?: number | null;
 }
 
 export interface DressPhoto {
@@ -69,9 +68,11 @@ export interface Dress {
   availability: string | null;
   fabric: string[] | null;
   details: string[] | null;
-  occasions: string[] | null;
   style_tags: string[] | null;
+  event_types: string[] | null;
+  additional_services: string[] | null;
   consent_confirmed: boolean;
+  is_deleted: boolean;
   created_at: string;
 }
 
@@ -80,30 +81,39 @@ export interface BoutiqueDress {
   dress_id: string;
   boutique_id: string;
   sku: string | null;
-  price: number | null;
+  price_sale: number | null;
+  price_original: number | null;
+  price_rental: number | null;
+  price_rental_original: number | null;
+  price_range_min: number | null;
+  price_range_max: number | null;
+  price_currency: string;
   price_visible: boolean;
+  deal_price: number | null;
+  deal_percent: number | null;
+  deal_active: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
-  is_range: boolean;
-  range_pct: number | null;
-  rent_price: number | null;
-  currency_id: number | null;
   created_at: string;
 }
 
 export interface BoutiqueDressRow {
-  id: string; // boutique_dresses.id
+  id: string;
   dress_id: string;
   sku: string | null;
-  price: number | null;
+  price_sale: number | null;
+  price_original: number | null;
+  price_rental: number | null;
+  price_rental_original: number | null;
+  price_range_min: number | null;
+  price_range_max: number | null;
+  price_currency: string;
   price_visible: boolean;
+  deal_price: number | null;
+  deal_percent: number | null;
+  deal_active: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
-  is_range: boolean;
-  range_pct: number | null;
-  rent_price: number | null;
-  currency_id: number | null;
-  currency: Currency | null;
   dresses: {
     id: string;
     title: string;
@@ -117,10 +127,6 @@ export interface BoutiqueDressRow {
 
 // ─── Service functions ────────────────────────────────────────────────────────
 
-/**
- * Insert a new dress, then insert the cover photo into dress_photos
- * (sort_order = 0) if coverPhotoPath is provided.
- */
 export async function createDress(
   supabase: SupabaseClient,
   data: DressFormData,
@@ -171,10 +177,6 @@ export async function createBoutiqueDress(
   return { data: row as BoutiqueDress, error: null };
 }
 
-/**
- * Update dress fields. If newCoverPhotoPath is provided, delete the existing
- * sort_order=0 photo and insert the new one.
- */
 export async function updateDress(
   supabase: SupabaseClient,
   id: string,
@@ -243,7 +245,6 @@ export async function softDeleteDress(
   dressId: string,
   boutiqueId: string
 ): Promise<{ error: string | null }> {
-  // Confirm the dress belongs to this boutique before deleting
   const { data: owned, error: checkError } = await supabase
     .from('boutique_dresses')
     .select('id')
@@ -282,15 +283,19 @@ export async function fetchBoutiqueDresses(
       id,
       dress_id,
       sku,
-      price,
+      price_sale,
+      price_original,
+      price_rental,
+      price_rental_original,
+      price_range_min,
+      price_range_max,
+      price_currency,
       price_visible,
+      deal_price,
+      deal_percent,
+      deal_active,
       available_sizes,
       is_active,
-      is_range,
-      range_pct,
-      rent_price,
-      currency_id,
-      currencies ( id, code, name, symbol ),
       dresses (
         id,
         title,
@@ -298,10 +303,7 @@ export async function fetchBoutiqueDresses(
         designer,
         color_name,
         color_code,
-        dress_photos (
-          path,
-          sort_order
-        )
+        dress_photos ( path, sort_order )
       )
     `)
     .eq('boutique_id', boutiqueId)
@@ -313,41 +315,25 @@ export async function fetchBoutiqueDresses(
     return { data: null, error: error.message };
   }
 
-  // Supabase JS SDK without Database generics infers foreign-key embeds as
-  // arrays at the TypeScript level even though PostgREST returns a single
-  // object for many-to-one relationships. Normalise here so consumers always
-  // receive the correct shape.
   const rows: BoutiqueDressRow[] = (data ?? []).map((row) => ({
     id: row.id,
     dress_id: row.dress_id,
     sku: row.sku,
-    price: row.price,
-    price_visible: row.price_visible,
-    available_sizes: row.available_sizes,
-    is_active: row.is_active,
-    is_range: row.is_range ?? false,
-    range_pct: row.range_pct ?? null,
-    rent_price: row.rent_price ?? null,
-    currency_id: row.currency_id ?? null,
-    currency: Array.isArray(row.currencies) ? (row.currencies[0] ?? null) : (row.currencies ?? null),
+    price_sale: row.price_sale ?? null,
+    price_original: row.price_original ?? null,
+    price_rental: row.price_rental ?? null,
+    price_rental_original: row.price_rental_original ?? null,
+    price_range_min: row.price_range_min ?? null,
+    price_range_max: row.price_range_max ?? null,
+    price_currency: row.price_currency ?? 'VND',
+    price_visible: row.price_visible ?? true,
+    deal_price: row.deal_price ?? null,
+    deal_percent: row.deal_percent ?? null,
+    deal_active: row.deal_active ?? false,
+    available_sizes: row.available_sizes ?? null,
+    is_active: row.is_active ?? false,
     dresses: Array.isArray(row.dresses) ? (row.dresses[0] ?? null) : row.dresses,
   }));
 
   return { data: rows, error: null };
-}
-
-export async function fetchCurrencies(
-  supabase: SupabaseClient
-): Promise<Currency[]> {
-  const { data, error } = await supabase
-    .from('currencies')
-    .select('id, code, name, symbol')
-    .order('id');
-
-  if (error) {
-    logger.error('fetchCurrencies: query failed', error);
-    return [];
-  }
-
-  return (data ?? []) as Currency[];
 }

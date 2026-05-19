@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { createDress, createBoutiqueDress, fetchCurrencies, type Currency } from '@/services/dress';
+import { createDress, createBoutiqueDress } from '@/services/dress';
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
@@ -17,11 +17,13 @@ const CONDITIONS = ['New', 'Sample', 'Pre-Owned'];
 const AVAILABILITIES = ['In Stock', 'Made to Order', 'Pre-Order'];
 const FABRICS = ['Tulle', 'Lace', 'Satin', 'Silk', 'Chiffon', 'Organza', 'Mikado', 'Crepe', 'Velvet', 'Georgette'];
 const DETAILS_OPTIONS = ['Beading', 'Sequins', 'Embroidery', 'Appliqué', 'Ruching', 'Pleating', 'Pockets', 'Belt', 'Bow'];
-const OCCASIONS = ['Garden', 'Beach', 'Church', 'Courthouse', 'Ballroom', 'Destination', 'Outdoor', 'Indoor'];
+const EVENT_TYPES = ['Garden', 'Beach', 'Church', 'Courthouse', 'Ballroom', 'Destination', 'Outdoor', 'Indoor'];
 const STYLE_TAGS_OPTIONS = ['Romantic', 'Boho', 'Classic', 'Modern', 'Vintage', 'Rustic', 'Glamorous', 'Minimalist', 'Ethereal'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2X', '4X'];
+const CURRENCIES = ['VND', 'USD', 'SGD', 'THB', 'EUR', 'GBP'];
+const ADDITIONAL_SERVICES_OPTIONS = ['Online Consultation', 'Fitting Available'];
 
-type ArrayField = 'fabric' | 'details' | 'occasions' | 'style_tags' | 'available_sizes';
+type ArrayField = 'fabric' | 'details' | 'event_types' | 'style_tags' | 'available_sizes' | 'additional_services';
 
 interface DressFormState {
   title: string;
@@ -40,15 +42,21 @@ interface DressFormState {
   availability: string;
   fabric: string[];
   details: string[];
-  occasions: string[];
+  event_types: string[];
   style_tags: string[];
+  additional_services: string[];
   consent_confirmed: boolean;
   sku: string;
-  currency_id: string;
-  price: string;
-  is_range: boolean;
-  range_pct: string;
-  rent_price: string;
+  price_currency: string;
+  price_sale: string;
+  price_original: string;
+  price_rental: string;
+  price_rental_original: string;
+  price_range_min: string;
+  price_range_max: string;
+  deal_price: string;
+  deal_percent: string;
+  deal_active: boolean;
   price_visible: boolean;
   available_sizes: string[];
   is_active: boolean;
@@ -71,15 +79,21 @@ const emptyForm: DressFormState = {
   availability: '',
   fabric: [],
   details: [],
-  occasions: [],
+  event_types: [],
   style_tags: [],
+  additional_services: [],
   consent_confirmed: false,
   sku: '',
-  currency_id: '',
-  price: '',
-  is_range: false,
-  range_pct: '',
-  rent_price: '',
+  price_currency: 'VND',
+  price_sale: '',
+  price_original: '',
+  price_rental: '',
+  price_rental_original: '',
+  price_range_min: '',
+  price_range_max: '',
+  deal_price: '',
+  deal_percent: '',
+  deal_active: false,
   price_visible: true,
   available_sizes: [],
   is_active: false,
@@ -90,7 +104,6 @@ export default function NewDressPage() {
   const supabase = createClient();
 
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
-  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
 
@@ -139,12 +152,6 @@ export default function NewDressPage() {
         }
 
         setBoutiqueId(profile.boutique_id as string);
-
-        const loaded = await fetchCurrencies(supabase);
-        if (loaded.length) {
-          setCurrencies(loaded);
-          setForm((prev) => ({ ...prev, currency_id: prev.currency_id || String(loaded[0].id) }));
-        }
       } catch (err) {
         logger.error('NewDressPage: unexpected error during session load', err);
         setPageError('An unexpected error occurred.');
@@ -166,7 +173,7 @@ export default function NewDressPage() {
 
   function handleArrayToggle(field: ArrayField, value: string) {
     setForm((prev) => {
-      const current = prev[field];
+      const current = prev[field] as string[];
       return {
         ...prev,
         [field]: current.includes(value)
@@ -179,7 +186,6 @@ export default function NewDressPage() {
   function handlePhotoUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setPhotoError(null);
     setPhotoFile(file);
     setImagePreview(URL.createObjectURL(file));
@@ -191,12 +197,6 @@ export default function NewDressPage() {
 
     setSaveLoading(true);
     setSaveError(null);
-
-    if (form.is_range && !form.price) {
-      setSaveError('A base price is required when using range pricing.');
-      setSaveLoading(false);
-      return;
-    }
 
     try {
       let coverPhotoPath: string | undefined;
@@ -237,8 +237,9 @@ export default function NewDressPage() {
           availability: form.availability || undefined,
           fabric: form.fabric.length ? form.fabric : undefined,
           details: form.details.length ? form.details : undefined,
-          occasions: form.occasions.length ? form.occasions : undefined,
+          event_types: form.event_types.length ? form.event_types : undefined,
           style_tags: form.style_tags.length ? form.style_tags : undefined,
+          additional_services: form.additional_services.length ? form.additional_services : undefined,
           consent_confirmed: form.consent_confirmed,
         },
         coverPhotoPath
@@ -252,14 +253,19 @@ export default function NewDressPage() {
 
       const { error: bdError } = await createBoutiqueDress(supabase, dress.id, boutiqueId, {
         sku: form.sku || undefined,
-        price: form.price ? parseFloat(form.price) : null,
+        price_currency: form.price_currency,
+        price_sale: form.price_sale ? parseFloat(form.price_sale) : null,
+        price_original: form.price_original ? parseFloat(form.price_original) : null,
+        price_rental: form.price_rental ? parseFloat(form.price_rental) : null,
+        price_rental_original: form.price_rental_original ? parseFloat(form.price_rental_original) : null,
+        price_range_min: form.price_range_min ? parseFloat(form.price_range_min) : null,
+        price_range_max: form.price_range_max ? parseFloat(form.price_range_max) : null,
+        deal_price: form.deal_price ? parseFloat(form.deal_price) : null,
+        deal_percent: form.deal_percent ? parseFloat(form.deal_percent) : null,
+        deal_active: form.deal_active,
         price_visible: form.price_visible,
         available_sizes: form.available_sizes.length ? form.available_sizes : undefined,
         is_active: form.is_active,
-        is_range: form.is_range,
-        range_pct: form.is_range && form.range_pct ? parseInt(form.range_pct, 10) : null,
-        rent_price: form.rent_price ? parseFloat(form.rent_price) : null,
-        currency_id: form.currency_id ? parseInt(form.currency_id, 10) : null,
       });
 
       if (bdError) {
@@ -520,11 +526,11 @@ export default function NewDressPage() {
             <div className="space-y-5">
 
               <div>
-                <p className={labelClass}>Occasions</p>
+                <p className={labelClass}>Event Types</p>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {OCCASIONS.map((v) => (
-                    <button key={v} type="button" onClick={() => handleArrayToggle('occasions', v)}
-                      className={chipClass(form.occasions.includes(v))}>
+                  {EVENT_TYPES.map((v) => (
+                    <button key={v} type="button" onClick={() => handleArrayToggle('event_types', v)}
+                      className={chipClass(form.event_types.includes(v))}>
                       {v}
                     </button>
                   ))}
@@ -584,110 +590,186 @@ export default function NewDressPage() {
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pricing</p>
 
                 <div>
-                  <label htmlFor="currency_id" className={labelClass}>Currency</label>
+                  <label htmlFor="price_currency" className={labelClass}>Currency</label>
                   <select
-                    id="currency_id" name="currency_id"
-                    value={form.currency_id} onChange={handleChange}
+                    id="price_currency" name="price_currency"
+                    value={form.price_currency} onChange={handleChange}
                     className={selectClass}
                   >
-                    {currencies.map((c) => (
-                      <option key={c.id} value={String(c.id)}>{c.code} — {c.name}</option>
+                    {CURRENCIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
                 </div>
 
-                <div>
-                  <label htmlFor="price" className={labelClass}>Giá bán (Purchase Price)</label>
-                  <input
-                    id="price" name="price" type="number" min="0" step="1"
-                    value={form.price} onChange={handleChange}
-                    placeholder="0"
-                    className={inputClass}
-                  />
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <input
-                    id="is_range" type="checkbox"
-                    checked={form.is_range}
-                    onChange={(e) => setForm((prev) => ({ ...prev, is_range: e.target.checked }))}
-                    className="w-4 h-4 rounded border-gray-300 text-[#C9A96E] focus:ring-[#C9A96E]"
-                  />
-                  <label htmlFor="is_range" className="text-sm text-gray-700 cursor-pointer">
-                    Show as price range instead of exact price
-                  </label>
-                </div>
-
-                {form.is_range && (
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="range_pct" className={labelClass}>Range ± %</label>
+                    <label htmlFor="price_sale" className={labelClass}>Sale Price</label>
                     <input
-                      id="range_pct" name="range_pct" type="number" min="1" max="99" step="1"
-                      required={form.is_range}
-                      value={form.range_pct} onChange={handleChange}
-                      placeholder="e.g. 25 for ±25%"
+                      id="price_sale" name="price_sale" type="number" min="0" step="1"
+                      value={form.price_sale} onChange={handleChange}
+                      placeholder="0"
                       className={inputClass}
                     />
                   </div>
-                )}
-
-                <div>
-                  <label htmlFor="rent_price" className={labelClass}>Giá thuê (Rental Price) — optional</label>
-                  <input
-                    id="rent_price" name="rent_price" type="number" min="0" step="1"
-                    value={form.rent_price} onChange={handleChange}
-                    placeholder="0"
-                    className={inputClass}
-                  />
+                  <div>
+                    <label htmlFor="price_original" className={labelClass}>Original Price</label>
+                    <input
+                      id="price_original" name="price_original" type="number" min="0" step="1"
+                      value={form.price_original} onChange={handleChange}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <p className={labelClass}>Available Sizes</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {SIZES.map((size) => (
-                    <button key={size} type="button" onClick={() => handleArrayToggle('available_sizes', size)}
-                      className={chipClass(form.available_sizes.includes(size))}>
-                      {size}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="price_rental" className={labelClass}>Rental Price</label>
+                    <input
+                      id="price_rental" name="price_rental" type="number" min="0" step="1"
+                      value={form.price_rental} onChange={handleChange}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="price_rental_original" className={labelClass}>Original Rental Price</label>
+                    <input
+                      id="price_rental_original" name="price_rental_original" type="number" min="0" step="1"
+                      value={form.price_rental_original} onChange={handleChange}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="price_range_min" className={labelClass}>Price Range Min</label>
+                    <input
+                      id="price_range_min" name="price_range_min" type="number" min="0" step="1"
+                      value={form.price_range_min} onChange={handleChange}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="price_range_max" className={labelClass}>Price Range Max</label>
+                    <input
+                      id="price_range_max" name="price_range_max" type="number" min="0" step="1"
+                      value={form.price_range_max} onChange={handleChange}
+                      placeholder="0"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Deal</p>
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label htmlFor="deal_price" className={labelClass}>Deal Price</label>
+                      <input
+                        id="deal_price" name="deal_price" type="number" min="0" step="1"
+                        value={form.deal_price} onChange={handleChange}
+                        placeholder="0"
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="deal_percent" className={labelClass}>Deal %</label>
+                      <input
+                        id="deal_percent" name="deal_percent" type="number" min="0" max="100" step="1"
+                        value={form.deal_percent} onChange={handleChange}
+                        placeholder="0"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700">Deal active</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Shows deal price to brides</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, deal_active: !prev.deal_active }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        form.deal_active ? 'bg-[#C9A96E]' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                        form.deal_active ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
                     </button>
-                  ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between py-3 border-t border-gray-100">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Show price to brides</p>
-                  <p className="text-xs text-gray-400 mt-0.5">When off, price is hidden in the app</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, price_visible: !prev.price_visible }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    form.price_visible ? 'bg-[#C9A96E]' : 'bg-gray-200'
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
-                    form.price_visible ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                </button>
-              </div>
+              {/* ── Stock & Status ── */}
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock &amp; Status</p>
 
-              <div className="flex items-center justify-between py-3 border-t border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Active listing</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Active dresses are visible to brides in the app</p>
+                  <p className={labelClass}>Available Sizes</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {SIZES.map((size) => (
+                      <button key={size} type="button" onClick={() => handleArrayToggle('available_sizes', size)}
+                        className={chipClass(form.available_sizes.includes(size))}>
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setForm((prev) => ({ ...prev, is_active: !prev.is_active }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    form.is_active ? 'bg-[#C9A96E]' : 'bg-gray-200'
-                  }`}
-                >
-                  <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
-                    form.is_active ? 'translate-x-6' : 'translate-x-1'
-                  }`} />
-                </button>
+
+                <div>
+                  <p className={labelClass}>Additional Services</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {ADDITIONAL_SERVICES_OPTIONS.map((v) => (
+                      <button key={v} type="button" onClick={() => handleArrayToggle('additional_services', v)}
+                        className={chipClass(form.additional_services.includes(v))}>
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Show price to brides</p>
+                    <p className="text-xs text-gray-400 mt-0.5">When off, price is hidden in the app</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, price_visible: !prev.price_visible }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      form.price_visible ? 'bg-[#C9A96E]' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                      form.price_visible ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between py-3 border-t border-gray-100">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Active listing</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Active dresses are visible to brides in the app</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, is_active: !prev.is_active }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      form.is_active ? 'bg-[#C9A96E]' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform ${
+                      form.is_active ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
               </div>
 
             </div>

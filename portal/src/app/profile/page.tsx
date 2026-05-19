@@ -7,9 +7,11 @@ import { getBoutique } from '@/services/boutique';
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_BRIDEE_SUPABASE_URL!;
+
 interface FormValues {
   name: string;
-  description: string;
+  about: string;
   address: string;
   city: string;
   country: string;
@@ -33,7 +35,7 @@ const VIETNAM_CITIES = [
 
 const emptyForm: FormValues = {
   name: '',
-  description: '',
+  about: '',
   address: '',
   city: 'Hanoi',
   country: 'Vietnam',
@@ -51,7 +53,7 @@ export default function ProfilePage() {
   const supabase = createClient();
 
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoPath, setLogoPath] = useState<string | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormValues>(emptyForm);
@@ -66,7 +68,6 @@ export default function ProfilePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load boutique data on mount
   useEffect(() => {
     async function load() {
       try {
@@ -113,7 +114,7 @@ export default function ProfilePage() {
 
         setForm({
           name: boutique.name ?? '',
-          description: boutique.description ?? '',
+          about: boutique.about ?? '',
           address: boutique.address ?? '',
           city: boutique.city || 'Hanoi',
           country: boutique.country || 'Vietnam',
@@ -126,12 +127,9 @@ export default function ProfilePage() {
           tiktok: boutique.tiktok ?? '',
         });
 
-        if (boutique.logo_url) {
-          setLogoUrl(boutique.logo_url);
-          const { data: publicUrlData } = supabase.storage
-            .from('boutique-logos')
-            .getPublicUrl(boutique.logo_url);
-          setLogoPreview(publicUrlData.publicUrl);
+        if (boutique.logo_path) {
+          setLogoPath(boutique.logo_path);
+          setLogoPreview(`${SUPABASE_URL}/storage/v1/object/public/boutique-logos/${boutique.logo_path}`);
         }
 
         logger.info('ProfilePage: boutique loaded', { boutiqueId: id });
@@ -163,10 +161,7 @@ export default function ProfilePage() {
     setSaveSuccess(false);
 
     try {
-      const payload = {
-        ...form,
-        is_active: form.name.trim() !== '',
-      };
+      const payload = { ...form };
 
       logger.info('ProfilePage: saving boutique', { boutiqueId, payload });
 
@@ -177,7 +172,6 @@ export default function ProfilePage() {
       });
 
       const json = await res.json() as { success?: boolean; error?: string };
-      logger.info('ProfilePage: save response', { status: res.status, json });
 
       if (!res.ok || json.error) {
         setSaveError(json.error ?? 'Failed to save profile.');
@@ -215,16 +209,15 @@ export default function ProfilePage() {
         return;
       }
 
-      logger.info('ProfilePage: saving logo_url', { boutiqueId, path });
+      logger.info('ProfilePage: saving logo_path', { boutiqueId, path });
 
       const saveRes = await fetch('/api/profile/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ logo_url: path }),
+        body: JSON.stringify({ logo_path: path }),
       });
 
       const saveJson = await saveRes.json() as { success?: boolean; error?: string };
-      logger.info('ProfilePage: logo save response', { status: saveRes.status, saveJson });
 
       if (!saveRes.ok || saveJson.error) {
         setLogoError(saveJson.error ?? 'Failed to save logo.');
@@ -232,11 +225,8 @@ export default function ProfilePage() {
         return;
       }
 
-      setLogoUrl(path);
-      const { data: publicUrlData } = supabase.storage
-        .from('boutique-logos')
-        .getPublicUrl(path);
-      setLogoPreview(publicUrlData.publicUrl);
+      setLogoPath(path);
+      setLogoPreview(`${SUPABASE_URL}/storage/v1/object/public/boutique-logos/${path}`);
 
       logger.info('ProfilePage: logo uploaded', { boutiqueId, path });
     } catch (err) {
@@ -244,12 +234,10 @@ export default function ProfilePage() {
       setLogoError('An unexpected error occurred.');
     } finally {
       setLogoLoading(false);
-      // Reset the file input so the same file can be re-selected if needed
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   }
 
-  // ─── Shared input/textarea class ────────────────────────────────────────────
   const inputClass =
     'w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-800 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#C9A96E] focus:border-transparent transition';
   const labelClass =
@@ -278,26 +266,21 @@ export default function ProfilePage() {
   return (
     <PortalLayout title="Boutique Profile">
       <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
+
         {/* Logo section */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
           <h2 className="text-base font-semibold text-gray-800 mb-6">Boutique Logo</h2>
 
           <div className="flex items-center gap-6">
-            {/* Preview */}
             <div className="w-20 h-20 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden flex-shrink-0">
               {logoPreview ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logoPreview}
-                  alt="Boutique logo"
-                  className="w-full h-full object-cover"
-                />
+                <img src={logoPreview} alt="Boutique logo" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-2xl">🏪</span>
               )}
             </div>
 
-            {/* Upload */}
             <div className="flex-1">
               <input
                 ref={fileInputRef}
@@ -314,21 +297,18 @@ export default function ProfilePage() {
                   logoLoading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                {logoLoading ? 'Uploading…' : logoUrl ? 'Change Logo' : 'Upload Logo'}
+                {logoLoading ? 'Uploading…' : logoPath ? 'Change Logo' : 'Upload Logo'}
               </label>
-              {logoError && (
-                <p className="mt-2 text-xs text-red-500">{logoError}</p>
-              )}
-              <p className="mt-2 text-xs text-gray-400">
-                PNG, JPG or WebP. Recommended: 400×400 px.
-              </p>
+              {logoError && <p className="mt-2 text-xs text-red-500">{logoError}</p>}
+              <p className="mt-2 text-xs text-gray-400">PNG, JPG or WebP. Recommended: 400×400 px.</p>
             </div>
           </div>
         </div>
 
         {/* Profile form */}
         <form onSubmit={handleSave} className="space-y-6">
-          {/* Section 1 — Boutique info */}
+
+          {/* Boutique Info */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
             <h2 className="text-base font-semibold text-gray-800 mb-6">Boutique Info</h2>
 
@@ -338,27 +318,18 @@ export default function ProfilePage() {
                   Name <span className="text-red-400">*</span>
                 </label>
                 <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={handleChange}
+                  id="name" name="name" type="text" required
+                  value={form.name} onChange={handleChange}
                   placeholder="Maison de Mariée"
                   className={inputClass}
                 />
               </div>
 
               <div>
-                <label htmlFor="description" className={labelClass}>
-                  Description
-                </label>
+                <label htmlFor="about" className={labelClass}>About</label>
                 <textarea
-                  id="description"
-                  name="description"
-                  rows={4}
-                  value={form.description}
-                  onChange={handleChange}
+                  id="about" name="about" rows={4}
+                  value={form.about} onChange={handleChange}
                   placeholder="Tell brides about your boutique…"
                   className={`${inputClass} resize-none`}
                 />
@@ -367,27 +338,13 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="country" className={labelClass}>Country</label>
-                  <select
-                    id="country"
-                    name="country"
-                    value={form.country}
-                    onChange={handleChange}
-                    className={inputClass}
-                  >
-                    {COUNTRIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                  <select id="country" name="country" value={form.country} onChange={handleChange} className={inputClass}>
+                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label htmlFor="city" className={labelClass}>City</label>
-                  <select
-                    id="city"
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    className={inputClass}
-                  >
+                  <select id="city" name="city" value={form.city} onChange={handleChange} className={inputClass}>
                     {form.country === 'Vietnam' && VIETNAM_CITIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
@@ -398,11 +355,8 @@ export default function ProfilePage() {
               <div>
                 <label htmlFor="address" className={labelClass}>Address</label>
                 <input
-                  id="address"
-                  name="address"
-                  type="text"
-                  value={form.address}
-                  onChange={handleChange}
+                  id="address" name="address" type="text"
+                  value={form.address} onChange={handleChange}
                   placeholder="123 Nguyen Hue, District 1"
                   className={inputClass}
                 />
@@ -410,7 +364,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Section 2 — Contact & social */}
+          {/* Contact & Social */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
             <h2 className="text-base font-semibold text-gray-800 mb-6">Contact &amp; Social</h2>
 
@@ -419,11 +373,8 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="phone" className={labelClass}>Phone</label>
                   <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={form.phone}
-                    onChange={handleChange}
+                    id="phone" name="phone" type="tel"
+                    value={form.phone} onChange={handleChange}
                     placeholder="+84 90 123 4567"
                     className={inputClass}
                   />
@@ -431,11 +382,8 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="email" className={labelClass}>Email</label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
+                    id="email" name="email" type="email"
+                    value={form.email} onChange={handleChange}
                     placeholder="hello@yourboutique.com"
                     className={inputClass}
                   />
@@ -445,11 +393,8 @@ export default function ProfilePage() {
               <div>
                 <label htmlFor="zalo" className={labelClass}>Zalo</label>
                 <input
-                  id="zalo"
-                  name="zalo"
-                  type="text"
-                  value={form.zalo}
-                  onChange={handleChange}
+                  id="zalo" name="zalo" type="text"
+                  value={form.zalo} onChange={handleChange}
                   placeholder="Zalo number or link"
                   className={inputClass}
                 />
@@ -458,11 +403,8 @@ export default function ProfilePage() {
               <div>
                 <label htmlFor="website" className={labelClass}>Website</label>
                 <input
-                  id="website"
-                  name="website"
-                  type="url"
-                  value={form.website}
-                  onChange={handleChange}
+                  id="website" name="website" type="url"
+                  value={form.website} onChange={handleChange}
                   placeholder="https://yourboutique.com"
                   className={inputClass}
                 />
@@ -472,11 +414,8 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="instagram" className={labelClass}>Instagram</label>
                   <input
-                    id="instagram"
-                    name="instagram"
-                    type="text"
-                    value={form.instagram}
-                    onChange={handleChange}
+                    id="instagram" name="instagram" type="text"
+                    value={form.instagram} onChange={handleChange}
                     placeholder="@yourboutique"
                     className={inputClass}
                   />
@@ -484,11 +423,8 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="facebook" className={labelClass}>Facebook</label>
                   <input
-                    id="facebook"
-                    name="facebook"
-                    type="text"
-                    value={form.facebook}
-                    onChange={handleChange}
+                    id="facebook" name="facebook" type="text"
+                    value={form.facebook} onChange={handleChange}
                     placeholder="facebook.com/yourboutique"
                     className={inputClass}
                   />
@@ -496,11 +432,8 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="tiktok" className={labelClass}>TikTok</label>
                   <input
-                    id="tiktok"
-                    name="tiktok"
-                    type="text"
-                    value={form.tiktok}
-                    onChange={handleChange}
+                    id="tiktok" name="tiktok" type="text"
+                    value={form.tiktok} onChange={handleChange}
                     placeholder="@yourboutique"
                     className={inputClass}
                   />
@@ -512,12 +445,8 @@ export default function ProfilePage() {
           {/* Save bar */}
           <div className="flex items-center justify-between">
             <div>
-              {saveError && (
-                <p className="text-sm text-red-500">{saveError}</p>
-              )}
-              {saveSuccess && (
-                <p className="text-sm text-green-600">Profile saved successfully.</p>
-              )}
+              {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+              {saveSuccess && <p className="text-sm text-green-600">Profile saved successfully.</p>}
             </div>
             <button
               type="submit"
