@@ -20,20 +20,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const { email, password, inviteCode, businessName } = body;
 
-  // 1. Validate invitation code
-  logger.info('register route: invite code check', {
-    received: inviteCode,
-    expected: process.env.BOUTIQUE_INVITE_CODE,
-    match: inviteCode === process.env.BOUTIQUE_INVITE_CODE,
-  });
-  if (inviteCode !== process.env.BRIDEE_BOUTIQUE_INVITE_CODE) {
-    logger.warn('register route: invalid invitation code attempt', { email });
-    return Response.json(
-      { error: 'Invalid invitation code. Please contact Bridee.' },
-      { status: 400 }
-    );
-  }
-
   const supabase = createAdminClient();
 
   // 2. Create auth user

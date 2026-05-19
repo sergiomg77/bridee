@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import logger from '@/lib/logger';
 
-const INVITE_CODE_CLIENT =
-  process.env.NEXT_PUBLIC_BRIDEE_BOUTIQUE_INVITE_CODE ?? null;
-
 export default function RegisterPage() {
   const router = useRouter();
   const [inviteCode, setInviteCode] = useState('');
@@ -21,9 +18,6 @@ export default function RegisterPage() {
   function validate(): boolean {
     const next: Partial<Record<string, string>> = {};
 
-    if (INVITE_CODE_CLIENT && inviteCode !== INVITE_CODE_CLIENT) {
-      next.inviteCode = 'Invalid invitation code.';
-    }
     if (!businessName.trim()) {
       next.businessName = 'Business name is required.';
     }
@@ -43,8 +37,6 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log('[register] inviteCode typed:', inviteCode, '| INVITE_CODE_CLIENT:', INVITE_CODE_CLIENT);
-
     if (!validate()) return;
 
     setLoading(true);
