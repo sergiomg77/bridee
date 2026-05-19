@@ -18,18 +18,26 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error: signInError } = await signIn(email, password);
+    try {
+      const { error: signInError } = await signIn(email, password);
 
-    if (signInError) {
-      logger.error('LoginPage: sign in failed', { error: signInError });
-      setError(signInError);
+      if (signInError) {
+        console.error('[LoginPage] signIn error:', signInError);
+        logger.error('LoginPage: sign in failed', { error: signInError });
+        setError(signInError);
+        setLoading(false);
+        return;
+      }
+
+      logger.info('LoginPage: signed in');
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err) {
+      console.error('[LoginPage] unexpected error:', err);
+      logger.error('LoginPage: unexpected error', err);
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
-      return;
     }
-
-    logger.info('LoginPage: signed in');
-    router.push('/dashboard');
-    router.refresh();
   }
 
   const inputClass =
@@ -80,7 +88,9 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 text-center">
+                {error}
+              </div>
             )}
 
             <button
