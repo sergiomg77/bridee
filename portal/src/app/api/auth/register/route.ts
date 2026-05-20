@@ -10,7 +10,6 @@ interface RegisterRequestBody {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  console.log('register route: called');
   logger.info('register route: called');
   try {
     let body: RegisterRequestBody;
@@ -76,8 +75,7 @@ export async function POST(request: Request): Promise<Response> {
     logger.info('register route: boutique registered successfully', { userId });
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('register route: unhandled exception:', err);
     logger.error('register route: unhandled exception', err);
-    return Response.json({ error: String(err) }, { status: 500 });
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

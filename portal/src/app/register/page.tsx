@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import logger from '@/lib/logger';
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [inviteCode, setInviteCode] = useState('');
+  const [success, setSuccess] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,7 +58,7 @@ export default function RegisterPage() {
       }
 
       logger.info('RegisterPage: registration successful');
-      router.push('/dashboard');
+      setSuccess(true);
     } catch (err) {
       logger.error('RegisterPage: unexpected error', err);
       setErrors({ form: 'An unexpected error occurred. Please try again.' });
@@ -85,6 +84,20 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          {success ? (
+            <div className="text-center space-y-4">
+              <p className="text-sm text-gray-700">
+                Account created! Please check your email to confirm your account, then sign in.
+              </p>
+              <Link
+                href="/login"
+                className="inline-block text-sm text-[#C9A96E] hover:text-[#b8945a] font-medium transition"
+              >
+                Go to sign in
+              </Link>
+            </div>
+          ) : (
+          <>
           <h2 className="text-lg font-semibold text-gray-800 mb-6">Create your boutique account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -210,6 +223,8 @@ export default function RegisterPage() {
               Sign in
             </Link>
           </p>
+          </>
+          )}
         </div>
       </div>
     </main>
