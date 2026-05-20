@@ -143,7 +143,9 @@ export default function EditDressPage() {
 
     async function load() {
       try {
+        console.log('EditDressPage: load started', { dressId });
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('EditDressPage: getUser', { userId: user?.id, error: userError?.message });
         if (userError) {
           logger.error('EditDressPage: getUser failed', userError);
           setPageError('Failed to load session.');
@@ -156,21 +158,27 @@ export default function EditDressPage() {
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('boutique_id')
-          .eq('id', user.id)
+        // v3: profiles has no boutique_id — query boutiques by owner_user_id
+        console.log('EditDressPage: querying boutique for user', user.id);
+        const { data: boutique, error: boutiqueError } = await supabase
+          .from('boutiques')
+          .select('id')
+          .eq('owner_user_id', user.id)
+          .limit(1)
           .single();
 
-        if (profileError || !profile?.boutique_id) {
-          logger.error('EditDressPage: profiles query failed', profileError);
-          setPageError('Failed to load profile.');
+        console.log('EditDressPage: boutique result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
+
+        if (boutiqueError || !boutique) {
+          logger.error('EditDressPage: boutique query failed', boutiqueError);
+          setPageError('Failed to load boutique.');
           setPageLoading(false);
           return;
         }
 
-        const bid = profile.boutique_id as string;
+        const bid = boutique.id;
         setBoutiqueId(bid);
+        console.log('EditDressPage: loading dress data', { dressId, boutiqueId: bid });
 
         const [dressResult, bdResult, photoResult, countResult] = await Promise.all([
           supabase

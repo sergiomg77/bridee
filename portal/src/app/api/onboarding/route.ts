@@ -37,39 +37,41 @@ export async function POST(request: Request): Promise<Response> {
 
   const admin = createAdminClient();
 
-  // Insert the boutique row. boutiques has no user-level INSERT policy, so admin client is required.
+  // v3: boutiques linked via owner_user_id, no is_active column, status is 'pending' by default
+  const slug =
+    name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + user.id.slice(0, 6);
+
+  console.log('onboarding route: inserting boutique', { userId: user.id, slug });
+
   const { data: boutique, error: boutiqueError } = await admin
     .from('boutiques')
     .insert({
+      owner_user_id: user.id,
       name: name.trim(),
+      slug,
       city: city?.trim() || null,
       country: country?.trim() || null,
       email: user.email,
-      is_active: false,
+      status: 'pending',
+      zalo: '',
     })
     .select('id')
     .single();
 
+  console.log('onboarding route: boutique insert result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
+
   if (boutiqueError || !boutique) {
     logger.error('onboarding route: boutiques insert failed', boutiqueError);
-    return Response.json({ error: 'Failed to create boutique.' }, { status: 500 });
+    return Response.json({ error: boutiqueError?.message ?? 'Failed to create boutique.' }, { status: 500 });
   }
 
-  // Link the profile to the new boutique
-  const { error: profileError } = await admin
-    .from('profiles')
-    .update({ boutique_id: boutique.id })
-    .eq('id', user.id);
-
-  if (profileError) {
-    logger.error('onboarding route: profiles update failed', profileError);
-    return Response.json({ error: 'Failed to link boutique to profile.' }, { status: 500 });
-  }
+  // v3: profiles has no boutique_id — boutique is linked via owner_user_id, no profile update needed
 
   logger.info('onboarding route: boutique setup complete', {
     userId: user.id,
     boutiqueId: boutique.id,
   });
 
+  console.log('onboarding route: complete', { userId: user.id, boutiqueId: boutique.id });
   return Response.json({ boutiqueId: boutique.id });
 }

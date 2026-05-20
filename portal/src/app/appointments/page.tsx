@@ -96,27 +96,35 @@ export default function AppointmentsPage() {
   useEffect(() => {
     async function init() {
       try {
+        console.log('AppointmentsPage: init started');
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('AppointmentsPage: getUser', { userId: user?.id, error: userError?.message });
         if (userError || !user) {
           setPageError('Not authenticated.');
           setPageLoading(false);
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('boutique_id')
-          .eq('id', user.id)
+        // v3: profiles has no boutique_id — query boutiques by owner_user_id
+        console.log('AppointmentsPage: querying boutique for user', user.id);
+        const { data: boutique, error: boutiqueError } = await supabase
+          .from('boutiques')
+          .select('id')
+          .eq('owner_user_id', user.id)
+          .limit(1)
           .single();
 
-        if (profileError || !profile?.boutique_id) {
-          logger.error('AppointmentsPage: profiles query failed', profileError);
-          setPageError('Failed to load profile.');
+        console.log('AppointmentsPage: boutique result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
+
+        if (boutiqueError || !boutique) {
+          logger.error('AppointmentsPage: boutique query failed', boutiqueError);
+          setPageError('Failed to load boutique.');
           setPageLoading(false);
           return;
         }
 
-        setBoutiqueId(profile.boutique_id as string);
+        setBoutiqueId(boutique.id);
+        console.log('AppointmentsPage: boutiqueId set', boutique.id);
       } catch (err) {
         logger.error('AppointmentsPage: init error', err);
         setPageError('An unexpected error occurred.');
