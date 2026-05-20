@@ -8,10 +8,14 @@ import logger from '@/lib/logger';
 export default async function DressesPage() {
   const supabase = await createClient();
 
+  console.log('DressesPage: load started');
+
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
+
+  console.log('DressesPage: getUser', { userId: user?.id, error: userError?.message });
 
   if (userError) {
     logger.error('DressesPage: getUser failed', userError);
@@ -22,28 +26,31 @@ export default async function DressesPage() {
     redirect('/login');
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('boutique_id')
-    .eq('id', user.id)
+  // v3: profiles has no boutique_id — query boutiques by owner_user_id
+  console.log('DressesPage: querying boutique for user', user.id);
+  const { data: boutique, error: boutiqueError } = await supabase
+    .from('boutiques')
+    .select('id')
+    .eq('owner_user_id', user.id)
+    .limit(1)
     .single();
 
-  if (profileError) {
-    logger.error('DressesPage: profiles query failed', profileError);
+  console.log('DressesPage: boutique result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
+
+  if (boutiqueError || !boutique) {
+    logger.error('DressesPage: boutique query failed', boutiqueError);
     redirect('/login');
   }
 
-  if (!profile?.boutique_id) {
-    logger.warn('DressesPage: no boutique_id on profile, redirecting to onboarding', { userId: user.id });
-    redirect('/onboarding');
-  }
+  const boutiqueId = boutique.id;
 
-  const boutiqueId = profile.boutique_id as string;
-
+  console.log('DressesPage: fetching dresses for boutique', boutiqueId);
   const { data: dresses, error: dressesError } = await fetchBoutiqueDresses(
     supabase,
     boutiqueId
   );
+
+  console.log('DressesPage: fetchBoutiqueDresses result', { count: dresses?.length, error: dressesError });
 
   if (dressesError) {
     logger.error('DressesPage: fetchBoutiqueDresses failed', { error: dressesError });
