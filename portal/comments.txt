@@ -1,0 +1,2 @@
+today is working the portal... to a decent degreee
+Portal fully working in production — v3 schema fixes complete
