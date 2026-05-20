@@ -10,6 +10,7 @@ interface RegisterRequestBody {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  logger.info('register route: called');
   let body: RegisterRequestBody;
 
   try {
