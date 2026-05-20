@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 import { createAdminClient } from '@/lib/supabase-admin';
 import logger from '@/lib/logger';
 
@@ -10,6 +10,7 @@ interface RegisterRequestBody {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  console.log('register route: called');
   logger.info('register route: called');
   try {
     let body: RegisterRequestBody;
@@ -26,7 +27,7 @@ export async function POST(request: Request): Promise<Response> {
     // Invite code validation skipped for now
 
     // 1. Create user with standard signUp (not admin) so password works with signInWithPassword
-    const supabase = createClient();
+    const supabase = createServerClient();
     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
 
     if (authError || !authData.user) {
@@ -75,7 +76,8 @@ export async function POST(request: Request): Promise<Response> {
     logger.info('register route: boutique registered successfully', { userId });
     return Response.json({ success: true }, { status: 200 });
   } catch (err) {
+    console.error('register route: unhandled exception:', err);
     logger.error('register route: unhandled exception', err);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: String(err) }, { status: 500 });
   }
 }
