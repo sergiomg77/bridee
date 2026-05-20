@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, ChangeEvent, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { getBoutique } from '@/services/boutique';
 import PortalLayout from '@/components/PortalLayout';
 import logger from '@/lib/logger';
 
@@ -49,7 +47,6 @@ const emptyForm: FormValues = {
 };
 
 export default function ProfilePage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [boutiqueId, setBoutiqueId] = useState<string | null>(null);
@@ -71,7 +68,9 @@ export default function ProfilePage() {
   useEffect(() => {
     async function load() {
       try {
+        console.log('ProfilePage: load started');
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('ProfilePage: getUser', { userId: user?.id, error: userError?.message });
         if (userError) {
           logger.error('ProfilePage: getUser failed', userError);
           setPageError('Failed to load session.');
@@ -84,33 +83,25 @@ export default function ProfilePage() {
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('boutique_id')
-          .eq('id', user.id)
+        // v3: profiles has no boutique_id — query boutiques by owner_user_id directly
+        console.log('ProfilePage: querying boutique for user', user.id);
+        const { data: boutique, error: boutiqueError } = await supabase
+          .from('boutiques')
+          .select('*')
+          .eq('owner_user_id', user.id)
+          .limit(1)
           .single();
 
-        if (profileError) {
-          logger.error('ProfilePage: profiles query failed', profileError);
-          setPageError('Failed to load profile.');
-          setPageLoading(false);
-          return;
-        }
-        if (!profile?.boutique_id) {
-          logger.warn('ProfilePage: boutique_id is null, redirecting to onboarding', { userId: user.id });
-          router.replace('/onboarding');
-          return;
-        }
+        console.log('ProfilePage: boutique result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
 
-        const id = profile.boutique_id as string;
-        setBoutiqueId(id);
-
-        const { data: boutique, error: boutiqueError } = await getBoutique(supabase, id);
         if (boutiqueError || !boutique) {
-          setPageError(boutiqueError ?? 'Failed to load boutique.');
+          logger.error('ProfilePage: boutique query failed', boutiqueError);
+          setPageError(boutiqueError?.message ?? 'Failed to load boutique.');
           setPageLoading(false);
           return;
         }
+
+        setBoutiqueId(boutique.id);
 
         setForm({
           name: boutique.name ?? '',
@@ -132,7 +123,8 @@ export default function ProfilePage() {
           setLogoPreview(`${SUPABASE_URL}/storage/v1/object/public/boutique-logos/${boutique.logo_path}`);
         }
 
-        logger.info('ProfilePage: boutique loaded', { boutiqueId: id });
+        console.log('ProfilePage: boutique loaded successfully', { boutiqueId: boutique.id });
+        logger.info('ProfilePage: boutique loaded', { boutiqueId: boutique.id });
       } catch (err) {
         logger.error('ProfilePage: unexpected error during load', err);
         setPageError('An unexpected error occurred.');

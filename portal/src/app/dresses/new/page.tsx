@@ -120,7 +120,9 @@ export default function NewDressPage() {
   useEffect(() => {
     async function loadSession() {
       try {
+        console.log('NewDressPage: loadSession started');
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        console.log('NewDressPage: getUser', { userId: user?.id, error: userError?.message });
         if (userError) {
           logger.error('NewDressPage: getUser failed', userError);
           setPageError('Failed to load session.');
@@ -133,25 +135,26 @@ export default function NewDressPage() {
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('boutique_id')
-          .eq('id', user.id)
+        // v3: profiles has no boutique_id — query boutiques by owner_user_id directly
+        console.log('NewDressPage: querying boutique for user', user.id);
+        const { data: boutique, error: boutiqueError } = await supabase
+          .from('boutiques')
+          .select('id')
+          .eq('owner_user_id', user.id)
+          .limit(1)
           .single();
 
-        if (profileError) {
-          logger.error('NewDressPage: profiles query failed', profileError);
-          setPageError('Failed to load profile.');
-          setPageLoading(false);
-          return;
-        }
-        if (!profile?.boutique_id) {
-          setPageError('No boutique linked to this account.');
+        console.log('NewDressPage: boutique result', { boutiqueId: boutique?.id, error: boutiqueError?.message });
+
+        if (boutiqueError || !boutique) {
+          logger.error('NewDressPage: boutique query failed', boutiqueError);
+          setPageError(boutiqueError?.message ?? 'No boutique linked to this account.');
           setPageLoading(false);
           return;
         }
 
-        setBoutiqueId(profile.boutique_id as string);
+        setBoutiqueId(boutique.id);
+        console.log('NewDressPage: boutiqueId set', boutique.id);
       } catch (err) {
         logger.error('NewDressPage: unexpected error during session load', err);
         setPageError('An unexpected error occurred.');
@@ -199,25 +202,30 @@ export default function NewDressPage() {
     setSaveError(null);
 
     try {
+      console.log('NewDressPage: handleSave started', { boutiqueId });
       let coverPhotoPath: string | undefined;
 
       if (photoFile) {
         const path = `${boutiqueId}/${Date.now()}-${photoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        console.log('NewDressPage: uploading photo', { path });
         const { error: uploadError } = await supabase.storage
           .from('dress-photos')
           .upload(path, photoFile, { upsert: false });
 
         if (uploadError) {
           logger.error('NewDressPage: photo upload failed', uploadError);
+          console.log('NewDressPage: photo upload error', uploadError.message);
           setSaveError(uploadError.message);
           setSaveLoading(false);
           return;
         }
 
         coverPhotoPath = path;
+        console.log('NewDressPage: photo uploaded', { path });
         logger.info('NewDressPage: photo uploaded', { path });
       }
 
+      console.log('NewDressPage: calling createDress');
       const { data: dress, error: dressError } = await createDress(
         supabase,
         {
@@ -245,12 +253,14 @@ export default function NewDressPage() {
         coverPhotoPath
       );
 
+      console.log('NewDressPage: createDress result', { dressId: dress?.id, error: dressError });
       if (dressError || !dress) {
         setSaveError(dressError ?? 'Failed to create dress.');
         setSaveLoading(false);
         return;
       }
 
+      console.log('NewDressPage: calling createBoutiqueDress', { dressId: dress.id, boutiqueId });
       const { error: bdError } = await createBoutiqueDress(supabase, dress.id, boutiqueId, {
         sku: form.sku || undefined,
         price_currency: form.price_currency,
@@ -268,12 +278,14 @@ export default function NewDressPage() {
         is_active: form.is_active,
       });
 
+      console.log('NewDressPage: createBoutiqueDress result', { error: bdError });
       if (bdError) {
         setSaveError(bdError);
         setSaveLoading(false);
         return;
       }
 
+      console.log('NewDressPage: dress created successfully', { dressId: dress.id, boutiqueId });
       logger.info('NewDressPage: dress created', { dressId: dress.id, boutiqueId });
       router.push('/dresses');
     } catch (err) {
