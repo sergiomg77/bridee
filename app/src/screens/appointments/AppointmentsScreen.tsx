@@ -160,7 +160,7 @@ export default function AppointmentsScreen({ navigation }: Props) {
           <View style={styles.detailRow}>
             <Ionicons name="shirt-outline" size={14} color="#888" />
             <Text style={styles.detailText} numberOfLines={1}>
-              {t('appointments.dresses')}: {item.dresses.map(d => d.dress?.title ?? d.sku).join(', ')}
+              {t('appointments.dresses')}: {item.dresses.map(d => d.dresses?.title ?? d.sku).join(', ')}
             </Text>
           </View>
         ) : null}

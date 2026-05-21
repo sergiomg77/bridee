@@ -21,7 +21,7 @@ import { getStorageUrl } from '../../utils/image';
 import { formatPrice } from '../../utils/currency';
 import { t } from '../../i18n';
 import logger from '../../lib/logger';
-import type { BoutiqueDress, DressPhoto } from '../../types/dress';
+import type { BoutiqueDress } from '../../types/dress';
 import type { Boutique } from '../../types/boutique';
 import type { DiscoverStackParamList } from '../../types/navigation';
 
@@ -399,11 +399,11 @@ export default function DressDetailScreen({ route, navigation }: Props) {
           </View>
 
           {/* Better Together — boutique services */}
-          {boutique && boutique.services.length > 0 && (
+          {boutique && (boutique.services ?? []).length > 0 && (
             <View style={styles.section}>
               <Text style={styles.label}>{t('dress_detail.better_together')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.serviceList}>
-                {boutique.services.map((svc) => (
+                {(boutique.services ?? []).map((svc) => (
                   <View key={svc.id} style={styles.serviceCard}>
                     <Ionicons name="checkmark-circle-outline" size={18} color="#C9A96E" />
                     <Text style={styles.serviceText}>{svc.name}</Text>

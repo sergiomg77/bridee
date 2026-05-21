@@ -17,7 +17,7 @@ import { getTryOnResultUrl } from '../../lib/supabase';
 import { getStorageUrl } from '../../utils/image';
 import { t } from '../../i18n';
 import logger from '../../lib/logger';
-import type { DressPhoto } from '../../types/dress';
+import type { NestedDressPhoto } from '../../types/dress';
 import type { ReferencePhoto } from '../../types/tryon';
 
 type Props = {
@@ -34,7 +34,7 @@ type RefPhotoWithUrl = ReferencePhoto & { signedUrl: string | null };
 export default function TryOnScreen({ route, navigation }: Props) {
   const { boutiqueDressId } = route.params;
 
-  const [eligiblePhotos, setEligiblePhotos] = useState<DressPhoto[]>([]);
+  const [eligiblePhotos, setEligiblePhotos] = useState<NestedDressPhoto[]>([]);
   const [referencePhotos, setReferencePhotos] = useState<RefPhotoWithUrl[]>([]);
   const [selectedDressPhotoId, setSelectedDressPhotoId] = useState<string | null>(null);
   const [selectedRefPhotoId, setSelectedRefPhotoId] = useState<string | null>(null);

@@ -6,6 +6,9 @@ export interface DressPhoto {
   is_tryon_eligible: boolean;
 }
 
+// Photo shape returned by the v3 API nested join (no dress_id in select)
+export type NestedDressPhoto = Omit<DressPhoto, 'dress_id'>;
+
 export interface Dress {
   id: string;
   title: string;
@@ -65,7 +68,7 @@ export interface NestedDress {
   availability: string | null;
   additional_services: string[] | null;
   is_deleted: boolean;
-  dress_photos: Array<{ id: string; path: string; sort_order: number; is_tryon_eligible: boolean }>;
+  dress_photos: NestedDressPhoto[];
 }
 
 // v3 API response — Supabase join keys match table names ("dresses", "boutiques")
