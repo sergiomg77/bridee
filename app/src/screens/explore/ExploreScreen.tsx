@@ -64,7 +64,13 @@ export default function ExploreScreen({ navigation }: Props) {
     if (exploreResult.error) {
       setErrorMessage(exploreResult.error);
     } else {
-      setExploreData(exploreResult.data);
+      const d = exploreResult.data;
+      setExploreData({
+        trending: d?.trending ?? [],
+        top: d?.top ?? [],
+        new_arrivals: d?.new_arrivals ?? [],
+        hot_deals: d?.hot_deals ?? [],
+      });
     }
 
     if (profileResult.data?.city) {
@@ -148,10 +154,10 @@ export default function ExploreScreen({ navigation }: Props) {
 
   function renderSection(
     title: string,
-    items: BoutiqueDress[],
+    items: BoutiqueDress[] | undefined | null,
     showDiscount = false
   ) {
-    if (items.length === 0) return null;
+    if (!items || items.length === 0) return null;
     return (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
