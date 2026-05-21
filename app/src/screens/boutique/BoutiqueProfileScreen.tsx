@@ -343,9 +343,11 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[1]}>
         {/* Cover + identity */}
         <View>
-          {/* Cover photo */}
+          {/* Cover photo — omitted when boutique has no cover photos */}
           {coverUri ? (
             <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
+          ) : (boutique.cover_photos ?? []).length === 0 ? (
+            <View style={styles.coverHeaderBar} />
           ) : (
             <View style={styles.coverPlaceholder} />
           )}
@@ -475,6 +477,7 @@ const styles = StyleSheet.create({
   // Cover
   coverImage: { width: '100%', height: COVER_H },
   coverPlaceholder: { width: '100%', height: COVER_H, backgroundColor: '#F0EDE8' },
+  coverHeaderBar: { width: '100%', height: 56, backgroundColor: '#FAFAFA' },
   backOverlay: {
     position: 'absolute',
     top: 16,
