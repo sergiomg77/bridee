@@ -16,7 +16,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 export default function SavedDressCard({ dress, onPress, selected = false, selectMode = false }: SavedDressCardProps) {
-  const coverPath = dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
+  const coverPath =
+    dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ??
+    dress.dresses?.dress_photos?.[0]?.path ??
+    null;
   const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
 
   return (

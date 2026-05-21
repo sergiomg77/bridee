@@ -346,9 +346,7 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
           {/* Cover photo — omitted when boutique has no cover photos */}
           {coverUri ? (
             <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
-          ) : (boutique.cover_photos ?? []).length === 0 ? (
-            <View style={styles.coverHeaderBar} />
-          ) : (
+          ) : (boutique.cover_photos ?? []).length === 0 ? null : (
             <View style={styles.coverPlaceholder} />
           )}
 
