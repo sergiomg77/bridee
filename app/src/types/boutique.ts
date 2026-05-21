@@ -65,10 +65,10 @@ export interface Boutique {
   tier_label: string | null;
   is_top_rated: boolean;
   status: string;
-  cover_photos: BoutiqueCoverPhoto[];
-  opening_hours: BoutiqueOpeningHours[];
-  services: BoutiqueService[];
-  promotions: BoutiquePromotion[];
+  cover_photos: BoutiqueCoverPhoto[] | null;
+  opening_hours: BoutiqueOpeningHours[] | null;
+  services: BoutiqueService[] | null;
+  promotions: BoutiquePromotion[] | null;
 }
 
 export type SavedBoutique = Boutique & {

@@ -72,7 +72,7 @@ export default function SavedBoutiquesScreen({ navigation }: Props) {
     : boutiques;
 
   function renderCard({ item }: { item: SavedBoutique }) {
-    const cover = item.cover_photos.sort((a, b) => a.sort_order - b.sort_order)[0];
+    const cover = (item.cover_photos ?? []).sort((a, b) => a.sort_order - b.sort_order)[0];
     const coverUri = cover ? getStorageUrl('dress-photos', cover.path) : null;
     const logoUri = item.logo_path ? getStorageUrl('boutique-logos', item.logo_path) : null;
 

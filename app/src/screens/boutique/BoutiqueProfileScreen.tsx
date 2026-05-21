@@ -228,10 +228,10 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
         </View>
 
         {/* Opening hours */}
-        {boutique.opening_hours.length > 0 ? (
+        {(boutique.opening_hours ?? []).length > 0 ? (
           <View style={styles.hoursBlock}>
             <Text style={styles.hoursTitle}>{t('boutique.opening_hours')}</Text>
-            {boutique.opening_hours
+            {(boutique.opening_hours ?? [])
               .sort((a, b) => a.day_of_week - b.day_of_week)
               .map((h) => (
                 <View key={h.id} style={styles.hoursRow}>
@@ -249,10 +249,10 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
         ) : null}
 
         {/* Services */}
-        {boutique.services.length > 0 ? (
+        {(boutique.services ?? []).length > 0 ? (
           <View style={styles.servicesBlock}>
             <Text style={styles.hoursTitle}>{t('boutique.services')}</Text>
-            {boutique.services.map((s) => (
+            {(boutique.services ?? []).map((s) => (
               <View key={s.id} style={styles.serviceRow}>
                 <Ionicons name="checkmark-circle-outline" size={16} color="#C9A96E" />
                 <Text style={styles.serviceText}>{s.name}</Text>
@@ -328,7 +328,7 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
     );
   }
 
-  const coverPhoto = boutique.cover_photos.sort((a, b) => a.sort_order - b.sort_order)[0];
+  const coverPhoto = (boutique.cover_photos ?? []).sort((a, b) => a.sort_order - b.sort_order)[0];
   const coverUri = coverPhoto ? getStorageUrl('dress-photos', coverPhoto.path) : null;
   const logoUri = boutique.logo_path ? getStorageUrl('boutique-logos', boutique.logo_path) : null;
 
