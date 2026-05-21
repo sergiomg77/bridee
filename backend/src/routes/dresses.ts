@@ -61,12 +61,16 @@ router.get('/feed', auth, async (req, res) => {
   const pageLimit = Math.min(parseInt(limit ?? '20', 10), 50);
 
   // Step 1: IDs already swiped by this user
+  const userId = req.user!.id;
+  console.log(`[FEED] user_id: ${userId}`);
+
   const { data: swiped } = await supabase
     .from('user_swipes')
     .select('boutique_dress_id')
-    .eq('user_id', req.user!.id);
+    .eq('user_id', userId);
 
   const excludeIds = (swiped ?? []).map((s) => (s as { boutique_dress_id: string }).boutique_dress_id);
+  console.log(`[FEED] already-swiped count: ${excludeIds.length}`);
 
   // Step 2: Optional style_tag pre-filter — get matching dress IDs first
   let dressIdFilter: string[] | null = null;
@@ -102,6 +106,7 @@ router.get('/feed', auth, async (req, res) => {
   }
 
   const { data, error } = await query;
+  console.log(`[FEED] query result — count: ${data?.length ?? 0}, error: ${error?.message ?? 'none'}`);
 
   if (error) {
     logger.error('GET /dresses/feed failed', error);
@@ -115,6 +120,7 @@ router.get('/feed', auth, async (req, res) => {
     return d && !d.is_deleted;
   });
 
+  console.log(`[FEED] returning ${feed.length} dresses (after soft-delete filter)`);
   res.json({ data: feed, error: null });
 });
 

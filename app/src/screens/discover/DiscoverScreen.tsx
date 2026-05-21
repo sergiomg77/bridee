@@ -38,10 +38,13 @@ export default function DiscoverScreen({ navigation }: Props) {
     setCurrentIndex(0);
     const filters = tag ? { style_tag: tag } : undefined;
     const { data, error } = await getFeed(filters);
+    console.log('[DiscoverScreen] getFeed response — data:', JSON.stringify(data)?.substring(0, 500), '| error:', error);
     if (error) {
       setErrorMessage(error);
     } else {
-      setDresses(data ?? []);
+      const dressesToSet = data ?? [];
+      console.log('[DiscoverScreen] setting dresses state — count:', dressesToSet.length, '| isArray:', Array.isArray(dressesToSet));
+      setDresses(dressesToSet);
       setErrorMessage(null);
     }
     setLoading(false);

@@ -87,7 +87,7 @@ export default function DressDetailScreen({ route, navigation }: Props) {
   async function handleShare() {
     if (!dress) return;
     try {
-      await Share.share({ message: `${dress.dress.title} — ${dress.boutique_name} on Bridee` });
+      await Share.share({ message: `${dress.dresses?.title ?? ''} — ${dress.boutiques?.name ?? ''} on Bridee` });
     } catch (err) {
       logger.error('DressDetailScreen: share failed', err);
     }
@@ -127,8 +127,8 @@ export default function DressDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const photos: DressPhoto[] = [...dress.photos].sort((a, b) => a.sort_order - b.sort_order);
-  const d = dress.dress;
+  const photos = [...(dress.dresses?.dress_photos ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+  const d = dress.dresses;
 
   function renderInfoChip(label: string, value: string | null | undefined) {
     if (!value) return null;
@@ -255,7 +255,7 @@ export default function DressDetailScreen({ route, navigation }: Props) {
 
           {/* Boutique + city */}
           <Text style={styles.boutiqueLine}>
-            {dress.boutique_name}{dress.boutique_city ? ` · ${dress.boutique_city}` : ''}
+            {dress.boutiques?.name ?? ''}{dress.boutiques?.city ? ` · ${dress.boutiques.city}` : ''}
           </Text>
 
           {d.subtitle ? <Text style={styles.subtitle}>{d.subtitle}</Text> : null}
@@ -419,7 +419,7 @@ export default function DressDetailScreen({ route, navigation }: Props) {
               <Text style={styles.label}>{t('dress_detail.similar_styles')}</Text>
               <View style={styles.similarGrid}>
                 {similar.slice(0, 6).map((item) => {
-                  const coverPath = item.photos.find((p) => p.sort_order === 0)?.path ?? null;
+                  const coverPath = item.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
                   const imgUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
                   return (
                     <TouchableOpacity
@@ -434,8 +434,8 @@ export default function DressDetailScreen({ route, navigation }: Props) {
                         <View style={styles.similarPlaceholder} />
                       )}
                       <View style={styles.similarInfo}>
-                        <Text style={styles.similarTitle} numberOfLines={1}>{item.dress.title}</Text>
-                        <Text style={styles.similarBoutique} numberOfLines={1}>{item.boutique_name}</Text>
+                        <Text style={styles.similarTitle} numberOfLines={1}>{item.dresses?.title}</Text>
+                        <Text style={styles.similarBoutique} numberOfLines={1}>{item.boutiques?.name}</Text>
                         {item.price_sale !== null && (
                           <Text style={styles.similarPrice}>{formatPrice(item.price_sale, item.price_currency)}</Text>
                         )}

@@ -98,7 +98,7 @@ export default function DressCard({ dress, onLike, onSkip, onPress }: DressCardP
     })
   ).current;
 
-  const coverPath = dress.photos.find((p) => p.sort_order === 0)?.path ?? null;
+  const coverPath = dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
   const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
   const priceDisplay = dress.price_sale !== null
     ? formatPrice(dress.price_sale, dress.price_currency)
@@ -126,9 +126,9 @@ export default function DressCard({ dress, onLike, onSkip, onPress }: DressCardP
         colors={['transparent', 'rgba(0,0,0,0.75)']}
         style={styles.gradient}
       >
-        <Text style={styles.title}>{dress.dress.title}</Text>
-        {dress.dress.subtitle ? (
-          <Text style={styles.subtitle}>{dress.dress.subtitle}</Text>
+        <Text style={styles.title}>{dress.dresses?.title}</Text>
+        {dress.dresses?.subtitle ? (
+          <Text style={styles.subtitle}>{dress.dresses.subtitle}</Text>
         ) : null}
         {priceDisplay !== null && (
           <Text style={styles.price}>{t('common.from')} {priceDisplay}</Text>

@@ -61,7 +61,7 @@ export default function TryOnScreen({ route, navigation }: Props) {
       return;
     }
 
-    const eligible = dressResult.data.photos.filter((p) => p.is_tryon_eligible);
+    const eligible = (dressResult.data.dresses?.dress_photos ?? []).filter((p) => p.is_tryon_eligible);
     setEligiblePhotos(eligible);
     if (eligible.length > 0) setSelectedDressPhotoId(eligible[0].id);
 

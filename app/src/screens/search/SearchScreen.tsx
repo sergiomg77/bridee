@@ -64,7 +64,7 @@ export default function SearchScreen({ navigation }: Props) {
   }
 
   function renderItem({ item }: { item: BoutiqueDress }) {
-    const coverPath = item.photos.find((p) => p.sort_order === 0)?.path ?? null;
+    const coverPath = item.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
     const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
 
     return (
@@ -79,8 +79,8 @@ export default function SearchScreen({ navigation }: Props) {
           <View style={styles.cardImagePlaceholder} />
         )}
         <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.dress.title}</Text>
-          <Text style={styles.cardBoutique} numberOfLines={1}>{item.boutique_name}</Text>
+          <Text style={styles.cardTitle} numberOfLines={1}>{item.dresses?.title}</Text>
+          <Text style={styles.cardBoutique} numberOfLines={1}>{item.boutiques?.name}</Text>
           {item.price_sale !== null && (
             <Text style={styles.cardPrice}>
               {formatPrice(item.price_sale, item.price_currency)}

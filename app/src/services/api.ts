@@ -36,8 +36,10 @@ export async function apiFetch<T>(
       return { data: null, error: errorMessage };
     }
 
-    const data = await response.json() as T;
-    return { data, error: null };
+    const rawText = await response.text();
+    console.log(`[apiFetch] raw body for ${path}:`, rawText.substring(0, 800));
+    const json = JSON.parse(rawText) as { data: T; error: string | null };
+    return { data: json.data ?? null, error: json.error ?? null };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     logger.error('apiFetch: fetch failed', { path, error: message });

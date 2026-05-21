@@ -208,7 +208,11 @@ export async function getFeed(
   filters?: object
 ): Promise<{ data: BoutiqueDress[] | null; error: string | null }> {
   const qs = filters ? `?${new URLSearchParams(filters as Record<string, string>).toString()}` : '';
-  return apiFetch<BoutiqueDress[]>(API.dresses.feed() + qs, { method: 'GET' });
+  const url = API.dresses.feed() + qs;
+  console.log('[getFeed] calling:', url);
+  const result = await apiFetch<BoutiqueDress[]>(url, { method: 'GET' });
+  console.log('[getFeed] result — isArray:', Array.isArray(result.data), '| count:', Array.isArray(result.data) ? result.data.length : 'n/a', '| error:', result.error);
+  return result;
 }
 
 export async function getExplore(): Promise<{

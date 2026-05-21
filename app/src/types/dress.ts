@@ -42,7 +42,33 @@ export interface SwipeRecord {
   created_at: string;
 }
 
-// v3 API response type — embeds dress and photos from the backend
+// Nested dress returned by Supabase join (key matches table name "dresses")
+export interface NestedDress {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  long_description: string | null;
+  designer: string | null;
+  silhouette: string | null;
+  neckline: string | null;
+  sleeve: string | null;
+  back_style: string | null;
+  length: string | null;
+  train: string | null;
+  color_name: string | null;
+  color_code: string | null;
+  fabric: string[] | null;
+  details: string[] | null;
+  style_tags: string[] | null;
+  event_types: string[] | null;
+  condition: string | null;
+  availability: string | null;
+  additional_services: string[] | null;
+  is_deleted: boolean;
+  dress_photos: Array<{ id: string; path: string; sort_order: number; is_tryon_eligible: boolean }>;
+}
+
+// v3 API response — Supabase join keys match table names ("dresses", "boutiques")
 export interface BoutiqueDress {
   id: string;
   dress_id: string;
@@ -61,10 +87,9 @@ export interface BoutiqueDress {
   deal_active: boolean;
   available_sizes: string[] | null;
   is_active: boolean;
-  dress: Dress;
-  photos: DressPhoto[];
-  boutique_name: string;
-  boutique_city: string;
+  created_at?: string;
+  dresses: NestedDress;
+  boutiques: { id: string; name: string; city: string | null };
 }
 
 // ── Legacy DB-level types (used by Supabase-direct queries in existing screens) ──

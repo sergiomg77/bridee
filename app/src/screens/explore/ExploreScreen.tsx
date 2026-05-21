@@ -111,7 +111,7 @@ export default function ExploreScreen({ navigation }: Props) {
   }
 
   function renderCard(item: BoutiqueDress, showDiscount = false) {
-    const coverPath = item.photos.find((p) => p.sort_order === 0)?.path ?? null;
+    const coverPath = item.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
     const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
     const hasDeal = showDiscount && item.deal_active && item.deal_percent !== null;
 
@@ -133,8 +133,8 @@ export default function ExploreScreen({ navigation }: Props) {
           </View>
         )}
         <View style={styles.cardInfo}>
-          <Text style={styles.cardTitle} numberOfLines={1}>{item.dress.title}</Text>
-          <Text style={styles.cardBoutique} numberOfLines={1}>{item.boutique_name}</Text>
+          <Text style={styles.cardTitle} numberOfLines={1}>{item.dresses?.title}</Text>
+          <Text style={styles.cardBoutique} numberOfLines={1}>{item.boutiques?.name}</Text>
           {item.price_sale !== null && (
             <View style={styles.priceRow}>
               <Text style={styles.cardPrice}>

@@ -16,7 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 export default function SavedDressCard({ dress, onPress, selected = false, selectMode = false }: SavedDressCardProps) {
-  const coverPath = dress.photos.find((p) => p.sort_order === 0)?.path ?? null;
+  const coverPath = dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
   const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
 
   return (
@@ -34,9 +34,9 @@ export default function SavedDressCard({ dress, onPress, selected = false, selec
       )}
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{dress.dress.title}</Text>
-        {dress.boutique_name ? (
-          <Text style={styles.boutique} numberOfLines={1}>{dress.boutique_name}</Text>
+        <Text style={styles.title} numberOfLines={1}>{dress.dresses?.title}</Text>
+        {dress.boutiques?.name ? (
+          <Text style={styles.boutique} numberOfLines={1}>{dress.boutiques.name}</Text>
         ) : null}
       </View>
     </TouchableOpacity>

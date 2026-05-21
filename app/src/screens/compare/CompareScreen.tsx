@@ -68,7 +68,7 @@ export default function CompareScreen({ route, navigation }: Props) {
       <View style={styles.row}>
         <View style={styles.labelCell} />
         {loaded.map((dress) => {
-          const coverPath = dress.photos.find((p) => p.sort_order === 0)?.path ?? null;
+          const coverPath = dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
           const imgUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
           return (
             <View key={dress.id} style={[styles.headerCell, { width: colW }]}>
@@ -77,7 +77,7 @@ export default function CompareScreen({ route, navigation }: Props) {
               ) : (
                 <View style={[styles.headerImagePlaceholder, { width: colW - 8, height: (colW - 8) * 1.3 }]} />
               )}
-              <Text style={styles.headerTitle} numberOfLines={2}>{dress.dress.title}</Text>
+              <Text style={styles.headerTitle} numberOfLines={2}>{dress.dresses?.title}</Text>
             </View>
           );
         })}
@@ -134,20 +134,20 @@ export default function CompareScreen({ route, navigation }: Props) {
             }
             return null;
           })}
-          {renderRow('compare.boutique', (d) => `${d.boutique_name}${d.boutique_city ? ` · ${d.boutique_city}` : ''}`)}
-          {renderRow('compare.color', (d) => d.dress.color_name)}
+          {renderRow('compare.boutique', (d) => `${d.boutiques?.name ?? ''}${d.boutiques?.city ? ` · ${d.boutiques.city}` : ''}`)}
+          {renderRow('compare.color', (d) => d.dresses?.color_name ?? null)}
           {renderRow('compare.size', (d) =>
             d.available_sizes && d.available_sizes.length > 0 ? d.available_sizes.join(', ') : null
           )}
           {renderRow('compare.style', (d) =>
-            d.dress.style_tags && d.dress.style_tags.length > 0 ? d.dress.style_tags.join(', ') : null
+            d.dresses?.style_tags && d.dresses.style_tags.length > 0 ? d.dresses.style_tags.join(', ') : null
           )}
-          {renderRow('dress_detail.silhouette', (d) => d.dress.silhouette)}
-          {renderRow('dress_detail.neckline', (d) => d.dress.neckline)}
+          {renderRow('dress_detail.silhouette', (d) => d.dresses?.silhouette ?? null)}
+          {renderRow('dress_detail.neckline', (d) => d.dresses?.neckline ?? null)}
           {renderRow('dress_detail.fabric', (d) =>
-            d.dress.fabric && d.dress.fabric.length > 0 ? d.dress.fabric.join(', ') : null
+            d.dresses?.fabric && d.dresses.fabric.length > 0 ? d.dresses.fabric.join(', ') : null
           )}
-          {renderRow('dress_detail.condition', (d) => d.dress.condition)}
+          {renderRow('dress_detail.condition', (d) => d.dresses?.condition ?? null)}
 
           {/* View dress buttons */}
           <View style={[styles.row, styles.dataRow]}>

@@ -24,6 +24,10 @@ if (process.env.BRIDEE_GOOGLE_CREDENTIALS_PATH) {
 // ── Express app ──────────────────────────────────────────────
 const app = express();
 app.use(cors());
+app.use((req, res, next) => {
+  console.log(`[REQUEST] ${req.method} ${req.path} — origin: ${req.headers.origin}`);
+  next();
+});
 app.use(express.json({ limit: '10mb' })); // 10 MB to accommodate base64 reference photo uploads
 
 app.get('/health', (_req, res) => {

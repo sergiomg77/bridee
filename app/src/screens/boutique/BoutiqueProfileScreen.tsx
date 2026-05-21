@@ -136,7 +136,7 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
     return (
       <View style={styles.dressGrid}>
         {collection.map((item) => {
-          const coverPath = item.photos.find((p) => p.sort_order === 0)?.path ?? null;
+          const coverPath = item.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ?? null;
           const imgUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
           return (
             <TouchableOpacity
@@ -151,7 +151,7 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
                 <View style={styles.dressImagePlaceholder} />
               )}
               <View style={styles.dressInfo}>
-                <Text style={styles.dressTitle} numberOfLines={1}>{item.dress.title}</Text>
+                <Text style={styles.dressTitle} numberOfLines={1}>{item.dresses?.title}</Text>
                 {item.price_sale !== null && (
                   <Text style={styles.dressPrice}>
                     {formatPrice(item.price_sale, item.price_currency)}
