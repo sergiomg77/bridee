@@ -229,7 +229,7 @@ export default function UserProfileScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Avatar + name */}
         <View style={styles.heroSection}>
           <View style={styles.avatarWrapper}>
@@ -331,6 +331,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
+  scrollView: { flex: 1 },
   scroll: { paddingBottom: 40 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
