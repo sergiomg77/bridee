@@ -11,7 +11,11 @@ import {
   ActivityIndicator,
   StyleSheet,
   SafeAreaView,
+  Platform,
+  Dimensions,
 } from 'react-native';
+
+const WINDOW_HEIGHT = Dimensions.get('window').height;
 import { StackScreenProps } from '@react-navigation/stack';
 import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -325,7 +329,8 @@ export default function UserProfileScreen({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: Platform.OS === 'web' ? undefined : 1,
+    maxHeight: Platform.OS === 'web' ? WINDOW_HEIGHT * 0.85 : undefined,
     backgroundColor: '#F5F5F5',
     maxWidth: 430,
     alignSelf: 'center',
