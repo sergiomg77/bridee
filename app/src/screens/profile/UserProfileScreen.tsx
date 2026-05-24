@@ -198,22 +198,25 @@ export default function UserProfileScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <View style={[styles.container, Platform.OS === 'web' && { height: '100vh' as any }]}>
-        <View style={styles.topBar}>
-          <Text style={styles.topBarTitle}>{t('user_profile.title')}</Text>
-          <TouchableOpacity onPress={() => navigation.getParent()?.goBack()} style={styles.closeBtn}>
-            <Ionicons name="close" size={24} color="#333" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#C9A96E" />
+      <View style={[styles.outerContainer, Platform.OS === 'web' && { height: '100vh' as any }]}>
+        <View style={[styles.container, Platform.OS === 'web' && { maxHeight: '85vh' as any }]}>
+          <View style={styles.topBar}>
+            <Text style={styles.topBarTitle}>{t('user_profile.title')}</Text>
+            <TouchableOpacity onPress={() => navigation.getParent()?.goBack()} style={styles.closeBtn}>
+              <Ionicons name="close" size={24} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color="#C9A96E" />
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, Platform.OS === 'web' && { height: '100vh' as any }]}>
+    <View style={[styles.outerContainer, Platform.OS === 'web' && { height: '100vh' as any }]}>
+    <View style={[styles.container, Platform.OS === 'web' && { maxHeight: '85vh' as any }]}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>{t('user_profile.title')}</Text>
         <TouchableOpacity onPress={() => navigation.getParent()?.goBack()} style={styles.closeBtn}>
@@ -347,12 +350,17 @@ export default function UserProfileScreen({ navigation }: Props) {
         </TouchableOpacity>
       </Modal>
     </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  container: {
+    flex: Platform.OS === 'web' ? undefined : 1,
     backgroundColor: '#F5F5F5',
     maxWidth: 430,
     alignSelf: 'center',
