@@ -10,8 +10,8 @@ import {
   Share,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
   Modal,
+  Platform,
 } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CommonActions } from '@react-navigation/native';
@@ -198,7 +198,7 @@ export default function UserProfileScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, Platform.OS === 'web' && { height: '100vh' as any }]}>
         <View style={styles.topBar}>
           <Text style={styles.topBarTitle}>{t('user_profile.title')}</Text>
           <TouchableOpacity onPress={() => navigation.getParent()?.goBack()} style={styles.closeBtn}>
@@ -208,12 +208,12 @@ export default function UserProfileScreen({ navigation }: Props) {
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#C9A96E" />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, Platform.OS === 'web' && { height: '100vh' as any }]}>
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>{t('user_profile.title')}</Text>
         <TouchableOpacity onPress={() => navigation.getParent()?.goBack()} style={styles.closeBtn}>
@@ -346,7 +346,7 @@ export default function UserProfileScreen({ navigation }: Props) {
           </View>
         </TouchableOpacity>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
