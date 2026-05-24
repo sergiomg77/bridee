@@ -95,6 +95,29 @@ export interface BoutiqueDress {
   boutiques: { id: string; name: string; city: string | null };
 }
 
+// Saved-dresses API response — swipe record joined with boutique_dresses
+export interface SavedDressBoutiqueDress {
+  id: string;
+  sku: string | null;
+  price_sale: number | null;
+  price_original: number | null;
+  price_currency: string;
+  price_visible: boolean;
+  deal_price: number | null;
+  deal_percent: number | null;
+  deal_active: boolean;
+  available_sizes: string[] | null;
+  dresses: NestedDress;
+  boutiques: { id: string; name: string; city: string | null };
+}
+
+export interface SavedDressRecord {
+  id: string;                // user_swipes row id — do not use for navigation
+  created_at: string;
+  boutique_dress_id: string; // use this for navigation / compare
+  boutique_dresses: SavedDressBoutiqueDress;
+}
+
 // ── Legacy DB-level types (used by Supabase-direct queries in existing screens) ──
 
 export interface BoutiqueDressRow {

@@ -1,7 +1,6 @@
 import { apiFetch } from '../api';
 import { API } from '../../constants/api';
-import type { SwipeDirection, BoutiqueDress } from '../../types/dress';
-import type { SwipeRecord } from '../../types/dress';
+import type { SwipeDirection, SwipeRecord, SavedDressRecord } from '../../types/dress';
 
 export async function recordSwipe(
   boutiqueDressId: string,
@@ -13,6 +12,6 @@ export async function recordSwipe(
   });
 }
 
-export async function getSavedDresses(): Promise<{ data: BoutiqueDress[] | null; error: string | null }> {
-  return apiFetch<BoutiqueDress[]>(API.swipes.saved(), { method: 'GET' });
+export async function getSavedDresses(): Promise<{ data: SavedDressRecord[] | null; error: string | null }> {
+  return apiFetch<SavedDressRecord[]>(API.swipes.saved(), { method: 'GET' });
 }

@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import type { BoutiqueDress } from '../../types/dress';
+import type { SavedDressRecord } from '../../types/dress';
 import { getStorageUrl } from '../../utils/image';
 
 interface SavedDressCardProps {
-  dress: BoutiqueDress;
+  dress: SavedDressRecord;
   onPress: () => void;
   selected?: boolean;
   selectMode?: boolean;
@@ -16,9 +16,10 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 export default function SavedDressCard({ dress, onPress, selected = false, selectMode = false }: SavedDressCardProps) {
+  const photos = dress.boutique_dresses?.dresses?.dress_photos;
   const coverPath =
-    dress.dresses?.dress_photos?.find((p) => p.sort_order === 0)?.path ??
-    dress.dresses?.dress_photos?.[0]?.path ??
+    photos?.find((p) => p.sort_order === 0)?.path ??
+    photos?.[0]?.path ??
     null;
   const imageUri = coverPath ? getStorageUrl('dress-photos', coverPath) : null;
 
@@ -37,9 +38,9 @@ export default function SavedDressCard({ dress, onPress, selected = false, selec
       )}
 
       <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{dress.dresses?.title}</Text>
-        {dress.boutiques?.name ? (
-          <Text style={styles.boutique} numberOfLines={1}>{dress.boutiques.name}</Text>
+        <Text style={styles.title} numberOfLines={1}>{dress.boutique_dresses?.dresses?.title}</Text>
+        {dress.boutique_dresses?.boutiques?.name ? (
+          <Text style={styles.boutique} numberOfLines={1}>{dress.boutique_dresses.boutiques.name}</Text>
         ) : null}
       </View>
     </TouchableOpacity>

@@ -17,13 +17,13 @@ import SavedDressCard from '../../components/saved/SavedDressCard';
 import { getSavedDresses } from '../../services/swipe/swipeService';
 import { t } from '../../i18n';
 import logger from '../../lib/logger';
-import type { BoutiqueDress } from '../../types/dress';
+import type { SavedDressRecord } from '../../types/dress';
 import type { SavedStackParamList } from '../../types/navigation';
 
 type Props = StackScreenProps<SavedStackParamList, 'SavedScreen'>;
 
 export default function SavedScreen({ navigation }: Props) {
-  const [dresses, setDresses] = useState<BoutiqueDress[]>([]);
+  const [dresses, setDresses] = useState<SavedDressRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
@@ -55,19 +55,19 @@ export default function SavedScreen({ navigation }: Props) {
     setSelectedIds(new Set());
   }
 
-  function handleCardPress(dress: BoutiqueDress) {
+  function handleCardPress(dress: SavedDressRecord) {
     if (selectMode) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
-        if (next.has(dress.id)) {
-          next.delete(dress.id);
+        if (next.has(dress.boutique_dress_id)) {
+          next.delete(dress.boutique_dress_id);
         } else if (next.size < 3) {
-          next.add(dress.id);
+          next.add(dress.boutique_dress_id);
         }
         return next;
       });
     } else {
-      navigation.navigate('DressDetailScreen', { boutiqueDressId: dress.id });
+      navigation.navigate('DressDetailScreen', { boutiqueDressId: dress.boutique_dress_id });
     }
   }
 
@@ -135,7 +135,7 @@ export default function SavedScreen({ navigation }: Props) {
               <SavedDressCard
                 dress={item}
                 onPress={() => handleCardPress(item)}
-                selected={selectedIds.has(item.id)}
+                selected={selectedIds.has(item.boutique_dress_id)}
                 selectMode={selectMode}
               />
             )}
