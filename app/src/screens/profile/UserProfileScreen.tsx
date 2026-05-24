@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   SafeAreaView,
+  Modal,
   Platform,
   Dimensions,
 } from 'react-native';
@@ -64,6 +65,8 @@ export default function UserProfileScreen({ navigation }: Props) {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [showLangPicker, setShowLangPicker] = useState(false);
+  const [selectedLang, setSelectedLang] = useState<'vi' | 'en'>(getLocale());
 
   useEffect(() => {
     load();
@@ -116,25 +119,14 @@ export default function UserProfileScreen({ navigation }: Props) {
   }
 
   function handleLanguage() {
-    const current = getLocale();
-    Alert.alert(t('user_profile.language_select'), undefined, [
-      {
-        text: t('user_profile.language_vi'),
-        style: current === 'vi' ? 'default' : 'default',
-        onPress: async () => {
-          await setLanguage('vi');
-          await updateProfile({ language: 'vi' });
-        },
-      },
-      {
-        text: t('user_profile.language_en'),
-        onPress: async () => {
-          await setLanguage('en');
-          await updateProfile({ language: 'en' });
-        },
-      },
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    setShowLangPicker(true);
+  }
+
+  async function selectLanguage(lang: 'vi' | 'en') {
+    setShowLangPicker(false);
+    setSelectedLang(lang);
+    await setLanguage(lang);
+    await updateProfile({ language: lang });
   }
 
   async function handleLogOut() {
@@ -181,7 +173,7 @@ export default function UserProfileScreen({ navigation }: Props) {
     profile?.avatar_path ? getStorageUrl('avatars', profile.avatar_path) : null;
 
   const currentLangLabel =
-    getLocale() === 'vi' ? t('user_profile.language_vi') : t('user_profile.language_en');
+    selectedLang === 'vi' ? t('user_profile.language_vi') : t('user_profile.language_en');
 
   function renderMenuItem(
     icon: React.ComponentProps<typeof Ionicons>['name'],
@@ -323,6 +315,41 @@ export default function UserProfileScreen({ navigation }: Props) {
           <Text style={styles.versionText}>{t('user_profile.version')} {APP_VERSION}</Text>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={showLangPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLangPicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.langOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLangPicker(false)}
+        >
+          <View style={styles.langSheet}>
+            <Text style={styles.langTitle}>{t('user_profile.language_select')}</Text>
+
+            {(['vi', 'en'] as const).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={styles.langOption}
+                onPress={() => selectLanguage(lang)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.langOptionText, selectedLang === lang && styles.langOptionActive]}>
+                  {lang === 'vi' ? t('user_profile.language_vi') : t('user_profile.language_en')}
+                </Text>
+                {selectedLang === lang && <Ionicons name="checkmark" size={18} color="#C9A96E" />}
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity style={styles.langCancel} onPress={() => setShowLangPicker(false)} activeOpacity={0.7}>
+              <Text style={styles.langCancelText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -450,4 +477,44 @@ const styles = StyleSheet.create({
 
   versionRow: { alignItems: 'center', marginTop: 20 },
   versionText: { fontSize: 12, color: '#CCC' },
+
+  langOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  langSheet: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 340,
+    overflow: 'hidden',
+  },
+  langTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  langOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  langOptionText: { fontSize: 16, color: '#333' },
+  langOptionActive: { color: '#C9A96E', fontWeight: '600' },
+  langCancel: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  langCancelText: { fontSize: 15, color: '#999' },
 });
