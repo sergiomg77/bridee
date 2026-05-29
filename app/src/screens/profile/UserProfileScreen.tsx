@@ -36,7 +36,8 @@ type QuickAction =
   | 'saved_dresses'
   | 'saved_tryons'
   | 'saved_boutiques'
-  | 'orders';
+  | 'orders'
+  | 'ref_photos';
 
 type QuickItem = {
   key: string;
@@ -49,6 +50,7 @@ const QUICK_ITEMS: QuickItem[] = [
   { key: 'bridal_dna', icon: 'sparkles-outline', labelKey: 'user_profile.bridal_dna_quiz', action: 'coming_soon' },
   { key: 'saved_dresses', icon: 'heart-outline', labelKey: 'user_profile.saved_dresses', action: 'saved_dresses' },
   { key: 'saved_tryons', icon: 'body-outline', labelKey: 'user_profile.saved_tryons', action: 'saved_tryons' },
+  { key: 'ref_photos', icon: 'camera-outline', labelKey: 'user_profile.ref_photos', action: 'ref_photos' },
   { key: 'saved_boutiques', icon: 'storefront-outline', labelKey: 'user_profile.saved_boutiques', action: 'saved_boutiques' },
   { key: 'orders', icon: 'calendar-outline', labelKey: 'user_profile.orders_booking', action: 'orders' },
   { key: 'design_dress', icon: 'color-palette-outline', labelKey: 'user_profile.design_dress', action: 'coming_soon' },
@@ -92,7 +94,15 @@ export default function UserProfileScreen({ navigation }: Props) {
         navigationRef.dispatch(CommonActions.navigate({ name: 'SavedScreen' }));
         break;
       case 'saved_tryons':
-        navigationRef.dispatch(CommonActions.navigate({ name: 'TryOnCollectionScreen' }));
+        navigationRef.dispatch(
+          CommonActions.navigate({
+            name: 'MainTabs',
+            params: { screen: 'Saved', params: { screen: 'TryOnCollectionScreen' } },
+          })
+        );
+        break;
+      case 'ref_photos':
+        navigation.navigate('ReferencePhotoScreen', { boutiqueDressId: '' });
         break;
       case 'saved_boutiques':
         navigation.navigate('SavedBoutiquesScreen');

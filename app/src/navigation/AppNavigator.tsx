@@ -162,6 +162,7 @@ function ProfileStack() {
       <ProfileNav.Screen name="ShoppingPreferencesScreen" component={ShoppingPreferencesScreen} />
       <ProfileNav.Screen name="BuildYourMoodboardScreen" component={BuildYourMoodboardScreen} />
       <ProfileNav.Screen name="SettingsScreen" component={SettingsScreen} />
+      <ProfileNav.Screen name="ReferencePhotoScreen" component={ReferencePhotoScreen as React.ComponentType} />
     </ProfileNav.Navigator>
   );
 }
