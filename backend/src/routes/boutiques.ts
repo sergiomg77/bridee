@@ -354,6 +354,7 @@ router.post('/', auth, requireRole('boutique'), async (req, res) => {
     country,
     phone,
     zalo,
+    whatsapp,
     email,
     website,
     facebook,
@@ -370,6 +371,7 @@ router.post('/', auth, requireRole('boutique'), async (req, res) => {
     country?: string;
     phone?: string;
     zalo?: string;
+    whatsapp?: string;
     email?: string;
     website?: string;
     facebook?: string;
@@ -404,6 +406,7 @@ router.post('/', auth, requireRole('boutique'), async (req, res) => {
       country: country ?? 'VN',
       phone,
       zalo,
+      whatsapp,
       email,
       website,
       facebook,
@@ -448,6 +451,7 @@ router.put('/:id', auth, requireRole('boutique'), async (req, res) => {
     country,
     phone,
     zalo,
+    whatsapp,
     email,
     website,
     facebook,
@@ -466,6 +470,7 @@ router.put('/:id', auth, requireRole('boutique'), async (req, res) => {
     country?: string;
     phone?: string;
     zalo?: string;
+    whatsapp?: string;
     email?: string;
     website?: string;
     facebook?: string;
@@ -488,6 +493,7 @@ router.put('/:id', auth, requireRole('boutique'), async (req, res) => {
       country,
       phone,
       zalo,
+      whatsapp,
       email,
       website,
       facebook,

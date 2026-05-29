@@ -16,6 +16,7 @@ interface FormValues {
   phone: string;
   email: string;
   zalo: string;
+  whatsapp: string;
   website: string;
   instagram: string;
   facebook: string;
@@ -38,6 +39,7 @@ const emptyForm: FormValues = {
   phone: '',
   email: '',
   zalo: '',
+  whatsapp: '',
   website: '',
   instagram: '',
   facebook: '',
@@ -110,6 +112,7 @@ export default function ProfilePage() {
           phone: boutique.phone ?? '',
           email: boutique.email ?? '',
           zalo: boutique.zalo ?? '',
+          whatsapp: boutique.whatsapp ?? '',
           website: boutique.website ?? '',
           instagram: boutique.instagram ?? '',
           facebook: boutique.facebook ?? '',
@@ -386,6 +389,16 @@ export default function ProfilePage() {
                   id="zalo" name="zalo" type="text"
                   value={form.zalo} onChange={handleChange}
                   placeholder="Zalo number or link"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="whatsapp" className={labelClass}>WhatsApp</label>
+                <input
+                  id="whatsapp" name="whatsapp" type="text"
+                  value={form.whatsapp} onChange={handleChange}
+                  placeholder="+84 90 123 4567 or link"
                   className={inputClass}
                 />
               </div>

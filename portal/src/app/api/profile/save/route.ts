@@ -12,6 +12,7 @@ interface SaveProfileBody {
   phone?: string | null;
   email?: string | null;
   zalo?: string | null;
+  whatsapp?: string | null;
   website?: string | null;
   instagram?: string | null;
   facebook?: string | null;
