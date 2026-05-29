@@ -261,7 +261,7 @@ export default function InboxPage() {
     const content = messageText.trim();
     setMessageText('');
 
-    const { error } = await supabase
+    const { data: sent, error } = await supabase
       .from('messages')
       .insert({
         conversation_id: selectedConvId,
@@ -269,13 +269,21 @@ export default function InboxPage() {
         message_type: 'text',
         content,
         is_read: false,
-      });
+      })
+      .select('id, conversation_id, sender_user_id, message_type, content, is_read, created_at')
+      .single();
 
     if (error) {
       logger.error('InboxPage: message send failed', error);
       setSendError(error.message);
       setMessageText(content);
     } else {
+      // Optimistically append so the message appears immediately without waiting for realtime
+      setMessages((prev) => {
+        const newMsg = sent as Message;
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
       // Update last_message_at on conversation
       void supabase
         .from('conversations')
