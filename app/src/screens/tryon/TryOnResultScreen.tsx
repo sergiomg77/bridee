@@ -8,10 +8,11 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  Share,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
 
 import { getTryOnJob } from '../../services/tryon/tryonService';
 import { getTryOnResultUrl } from '../../lib/supabase';
@@ -113,12 +114,36 @@ export default function TryOnResultScreen({ route, navigation }: Props) {
 
   async function handleDownload() {
     if (!resultUrl) return;
+
+    if (Platform.OS === 'web') {
+      try {
+        const response = await fetch(resultUrl);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = 'bridee-tryon-result.jpg';
+        anchor.click();
+        URL.revokeObjectURL(objectUrl);
+      } catch (err) {
+        logger.error('TryOnResultScreen: web download failed', { err });
+        Alert.alert('Download failed', 'Could not save the image.');
+      }
+      return;
+    }
+
     try {
-      const dest = `${FileSystem.cacheDirectory ?? ''}tryon_result.jpg`;
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission required', 'Allow photo library access to save the image.');
+        return;
+      }
+      const dest = `${FileSystem.cacheDirectory ?? ''}tryon-result.jpg`;
       const { uri } = await FileSystem.downloadAsync(resultUrl, dest);
-      await Share.share({ url: uri, title: 'Your try-on result' });
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Alert.alert('Saved', 'Image saved to your photo library.');
     } catch (err) {
-      logger.error('TryOnResultScreen: download failed', { err });
+      logger.error('TryOnResultScreen: native download failed', { err });
       Alert.alert('Download failed', 'Could not save the image.');
     }
   }
