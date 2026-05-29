@@ -22,14 +22,12 @@ interface FormValues {
   tiktok: string;
 }
 
-const COUNTRIES = ['Vietnam'] as const;
+const COUNTRIES = ['Vietnam', 'Japan'] as const;
 
-const VIETNAM_CITIES = [
-  'Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Can Tho', 'Hai Phong',
-  'Bien Hoa', 'Hue', 'Nha Trang', 'Da Lat', 'Vung Tau',
-  'Buon Ma Thuot', 'Thai Nguyen', 'Qui Nhon', 'Long Xuyen',
-  'My Tho', 'Nam Dinh', 'Vinh', 'Thanh Hoa', 'Rach Gia', 'Ca Mau',
-] as const;
+const CITIES: Record<string, string[]> = {
+  Vietnam: ['Ho Chi Minh City', 'Hanoi', 'Da Nang', 'Can Tho', 'Hai Phong'],
+  Japan: ['Tokyo', 'Osaka', 'Yokohama', 'Nagoya', 'Sapporo'],
+};
 
 const emptyForm: FormValues = {
   name: '',
@@ -337,7 +335,7 @@ export default function ProfilePage() {
                 <div>
                   <label htmlFor="city" className={labelClass}>City</label>
                   <select id="city" name="city" value={form.city} onChange={handleChange} className={inputClass}>
-                    {form.country === 'Vietnam' && VIETNAM_CITIES.map((c) => (
+                    {(CITIES[form.country] ?? []).map((c) => (
                       <option key={c} value={c}>{c}</option>
                     ))}
                   </select>
