@@ -408,8 +408,8 @@ export default function InboxPage() {
                   <div key={msg.id} className={`flex w-full ${isMine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
                       isMine
-                        ? 'bg-[#C9A96E] text-white rounded-br-sm'
-                        : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
+                        ? 'bg-[#8B6F5E] text-white rounded-br-none'
+                        : 'bg-stone-100 text-gray-800 rounded-bl-none'
                     }`}>
                       {msg.message_type === 'image' ? (() => {
                         const imgSrc = getMessageImageSrc(msg.content);
