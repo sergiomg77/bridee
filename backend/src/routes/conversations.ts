@@ -129,10 +129,10 @@ router.post('/', auth, async (req, res) => {
     initial_message?: string;
   };
 
-  if (!participant_type || !participant_id || !initial_message) {
+  if (!participant_type || !participant_id) {
     res.status(400).json({
       data: null,
-      error: 'participant_type, participant_id, and initial_message are required',
+      error: 'participant_type and participant_id are required',
     });
     return;
   }
@@ -183,31 +183,39 @@ router.post('/', auth, async (req, res) => {
     conversationId = (newConv as { id: string }).id;
   }
 
-  // Insert the message
-  const { data: message, error: msgErr } = await supabase
-    .from('messages')
-    .insert({
-      conversation_id: conversationId,
-      sender_user_id: req.user!.id,
-      message_type: 'text',
-      content: initial_message,
-    })
-    .select()
-    .single();
+  // Optionally insert the first message
+  if (initial_message) {
+    const { error: msgErr } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_user_id: req.user!.id,
+        message_type: 'text',
+        content: initial_message,
+      });
 
-  if (msgErr) {
-    logger.error('POST /conversations: message insert failed', msgErr);
-    res.status(500).json({ data: null, error: msgErr.message });
-    return;
+    if (msgErr) {
+      logger.error('POST /conversations: message insert failed', msgErr);
+      res.status(500).json({ data: null, error: msgErr.message });
+      return;
+    }
+
+    await supabase
+      .from('conversations')
+      .update({ last_message_at: now, updated_at: now })
+      .eq('id', conversationId);
   }
 
-  // Refresh last_message_at
-  await supabase
-    .from('conversations')
-    .update({ last_message_at: now, updated_at: now })
-    .eq('id', conversationId);
+  // Fetch participant name so the client can label the thread immediately
+  const participantTable = participant_type === 'boutique' ? 'boutiques' : 'vendors';
+  const { data: participantRow } = await supabase
+    .from(participantTable)
+    .select('name')
+    .eq('id', participant_id)
+    .maybeSingle();
+  const participant_name = (participantRow as { name: string } | null)?.name ?? '';
 
-  res.status(201).json({ data: { conversation_id: conversationId, message }, error: null });
+  res.status(201).json({ data: { id: conversationId, participant_name }, error: null });
 });
 
 // ── Messages ──────────────────────────────────────────────────

@@ -83,7 +83,7 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
   async function handleChat() {
     if (startingChat) return;
     setStartingChat(true);
-    const { data, error } = await startConversation({ boutique_id: boutiqueId });
+    const { data, error } = await startConversation({ participant_type: 'boutique', participant_id: boutiqueId });
     setStartingChat(false);
     if (error || !data) {
       logger.error('BoutiqueProfileScreen: startConversation failed', { error });
