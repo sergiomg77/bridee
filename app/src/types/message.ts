@@ -20,6 +20,6 @@ export interface Conversation {
   created_at: string;
   participant_name: string;
   participant_avatar_path: string | null;
-  last_message: string | null;
+  last_message: Message | null;
   unread_count: number;
 }

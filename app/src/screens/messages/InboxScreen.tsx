@@ -113,7 +113,7 @@ export default function InboxScreen({ navigation }: Props) {
             ) : null}
           </View>
           <Text style={[styles.preview, isUnread && styles.previewBold]} numberOfLines={1}>
-            {item.last_message ?? t('messages.empty_subtitle')}
+            {item.last_message?.content ?? t('messages.empty_subtitle')}
           </Text>
         </View>
       </TouchableOpacity>
