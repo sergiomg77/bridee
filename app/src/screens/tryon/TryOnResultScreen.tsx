@@ -8,9 +8,10 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  Dimensions,
+  Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
 
 import { getTryOnJob } from '../../services/tryon/tryonService';
 import { getTryOnResultUrl } from '../../lib/supabase';
@@ -25,9 +26,6 @@ type Props = {
   };
   route: { params: { jobId: string; boutiqueDressId: string } };
 };
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const IMAGE_H = Math.min(SCREEN_WIDTH, 430) * 1.3;
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -113,6 +111,18 @@ export default function TryOnResultScreen({ route, navigation }: Props) {
     }
   }
 
+  async function handleDownload() {
+    if (!resultUrl) return;
+    try {
+      const dest = `${FileSystem.cacheDirectory ?? ''}tryon_result.jpg`;
+      const { uri } = await FileSystem.downloadAsync(resultUrl, dest);
+      await Share.share({ url: uri, title: 'Your try-on result' });
+    } catch (err) {
+      logger.error('TryOnResultScreen: download failed', { err });
+      Alert.alert('Download failed', 'Could not save the image.');
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -141,7 +151,7 @@ export default function TryOnResultScreen({ route, navigation }: Props) {
             <Image
               source={{ uri: resultUrl }}
               style={styles.resultImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={styles.resultPlaceholder}>
@@ -177,7 +187,7 @@ export default function TryOnResultScreen({ route, navigation }: Props) {
             {job.status === 'completed' && (
               <TouchableOpacity
                 style={styles.downloadButton}
-                onPress={() => Alert.alert(t('tryon.download'), t('common.coming_soon'))}
+                onPress={handleDownload}
                 activeOpacity={0.85}
               >
                 <Ionicons name="download-outline" size={18} color="#C9A96E" />
@@ -232,12 +242,12 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
 
   resultImage: {
+    flex: 1,
     width: '100%',
-    height: IMAGE_H,
   },
   resultPlaceholder: {
+    flex: 1,
     width: '100%',
-    height: IMAGE_H,
     backgroundColor: '#F5F5F5',
     alignItems: 'center',
     justifyContent: 'center',
