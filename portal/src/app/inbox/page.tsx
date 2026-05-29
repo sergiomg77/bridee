@@ -392,13 +392,18 @@ export default function InboxPage() {
               messages.map((msg) => {
                 const isMine = msg.sender_user_id === myUserId;
                 return (
-                  <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                  <div key={msg.id} className={`flex w-full ${isMine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
                       isMine
                         ? 'bg-[#C9A96E] text-white rounded-br-sm'
                         : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
                     }`}>
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                      {msg.message_type === 'image' ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={msg.content} alt="attachment" className="max-w-full h-auto rounded-xl" />
+                      ) : (
+                        <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                      )}
                       <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
                         {formatMessageTime(msg.created_at)}
                       </p>
