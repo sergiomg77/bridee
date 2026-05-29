@@ -18,10 +18,10 @@ const LENGTHS = ['Mini', 'Knee', 'Tea', 'Ankle', 'Floor', 'Chapel', 'Cathedral']
 const TRAINS = ['None', 'Sweep', 'Court', 'Chapel', 'Cathedral', 'Royal'];
 const CONDITIONS = ['New', 'Sample', 'Pre-Owned'];
 const AVAILABILITIES = ['In Stock', 'Made to Order', 'Pre-Order'];
-const FABRICS = ['Tulle', 'Lace', 'Satin', 'Silk', 'Chiffon', 'Organza', 'Mikado', 'Crepe', 'Velvet', 'Georgette'];
-const DETAILS_OPTIONS = ['Beading', 'Sequins', 'Embroidery', 'Appliqué', 'Ruching', 'Pleating', 'Pockets', 'Belt', 'Bow'];
-const EVENT_TYPES = ['Garden', 'Beach', 'Church', 'Courthouse', 'Ballroom', 'Destination', 'Outdoor', 'Indoor'];
-const STYLE_TAGS_OPTIONS = ['Romantic', 'Boho', 'Classic', 'Modern', 'Vintage', 'Rustic', 'Glamorous', 'Minimalist', 'Ethereal'];
+const FABRICS = ['Tulle', 'Lace', 'Satin', 'Silk', 'Chiffon', 'Organza', 'Mikado', 'Crepe', 'Velvet', 'Georgette', 'Taffeta', 'Brocade'];
+const DETAILS_OPTIONS = ['Beading', 'Sequins', 'Embroidery', 'Appliqué', 'Ruching', 'Pleating', 'Pockets', 'Belt', 'Bow', 'Pearls & Crystals', 'Detachable Skirt'];
+const EVENT_TYPES = ['Garden', 'Beach', 'Church', 'Courthouse', 'Ballroom', 'Destination', 'Outdoor', 'Indoor', 'After Party', 'Pre-wedding Photoshoot', 'Civil Wedding', 'Engagement', 'Bachelorette Party'];
+const STYLE_TAGS_OPTIONS = ['Romantic', 'Boho', 'Classic', 'Modern', 'Vintage', 'Rustic', 'Glamorous', 'Minimalist', 'Ethereal', 'Architecture', 'Gothic', 'Old Money', 'Haute Couture'];
 const SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2X', '4X'];
 const CURRENCIES = ['VND', 'USD', 'SGD', 'THB', 'EUR', 'GBP'];
 const ADDITIONAL_SERVICES_OPTIONS = ['Online Consultation', 'Fitting Available'];
@@ -892,7 +892,7 @@ export default function EditDressPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-gray-100">
+                <div className="hidden pt-2 border-t border-gray-100">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Deal</p>
                   <div className="grid grid-cols-2 gap-4 mb-3">
                     <div>
