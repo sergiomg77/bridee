@@ -91,7 +91,12 @@ export default function UserProfileScreen({ navigation }: Props) {
         showComingSoon();
         break;
       case 'saved_dresses':
-        navigationRef.dispatch(CommonActions.navigate({ name: 'SavedScreen' }));
+        navigationRef.dispatch(
+          CommonActions.navigate({
+            name: 'MainTabs',
+            params: { screen: 'Saved' },
+          })
+        );
         break;
       case 'saved_tryons':
         navigationRef.dispatch(
