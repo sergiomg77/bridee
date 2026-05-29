@@ -42,6 +42,11 @@ function formatMessageTime(ts: string): string {
   return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
+function getMessageImageSrc(content: string): string {
+  if (content.startsWith('http') || content.startsWith('data:image')) return content;
+  return `data:image/jpeg;base64,${content}`;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function InboxPage() {
@@ -398,10 +403,15 @@ export default function InboxPage() {
                         ? 'bg-[#C9A96E] text-white rounded-br-sm'
                         : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
                     }`}>
-                      {msg.message_type === 'image' ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={msg.content} alt="attachment" className="max-w-full h-auto rounded-xl" />
-                      ) : (
+                      {msg.message_type === 'image' ? (() => {
+                        const imgSrc = getMessageImageSrc(msg.content);
+                        return (
+                          <a href={imgSrc} target="_blank" rel="noopener noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={imgSrc} alt="attachment" className="max-w-full h-auto rounded-xl" />
+                          </a>
+                        );
+                      })() : (
                         <p className="text-sm leading-relaxed break-words">{msg.content}</p>
                       )}
                       <p className={`text-[10px] mt-1 ${isMine ? 'text-white/70' : 'text-gray-400'}`}>
