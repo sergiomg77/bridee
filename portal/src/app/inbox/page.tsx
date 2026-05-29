@@ -176,7 +176,7 @@ export default function InboxPage() {
     if (!selectedConvId || !myUserId) return;
     void loadMessages(selectedConvId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedConvId]);
+  }, [selectedConvId, myUserId]);
 
   async function loadMessages(convId: string) {
     setMsgsLoading(true);
@@ -403,7 +403,11 @@ export default function InboxPage() {
               </div>
             ) : (
               messages.map((msg) => {
-                const isMine = msg.sender_user_id === myUserId;
+                // Use the bride's user_id from the conversation as the pivot — more reliable
+                // than myUserId which may be null during the first render after messages load.
+                const isMine = selectedConv
+                  ? msg.sender_user_id !== selectedConv.user_id
+                  : msg.sender_user_id === myUserId;
                 return (
                   <div key={msg.id} className={`flex w-full ${isMine ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
