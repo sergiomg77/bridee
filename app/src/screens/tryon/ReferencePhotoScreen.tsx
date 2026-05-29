@@ -164,8 +164,9 @@ export default function ReferencePhotoScreen({ route, navigation }: Props) {
                   )}
 
                   {slot.photo && !slot.uploading && (
-                    <View style={styles.uploadedBadge}>
-                      <Ionicons name="checkmark-circle" size={22} color="#4CAF50" />
+                    <View style={styles.editOverlay}>
+                      <Ionicons name="pencil" size={13} color="#FFFFFF" />
+                      <Text style={styles.editOverlayText}>Change</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -249,12 +250,22 @@ const styles = StyleSheet.create({
     borderColor: '#E8E0D8',
     borderStyle: 'dashed',
   },
-  uploadedBadge: {
+  editOverlay: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 4,
+  },
+  editOverlayText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   slotLabel: { fontSize: 13, fontWeight: '600', color: '#333' },
   slotStatus: { fontSize: 12, color: '#C9A96E', fontWeight: '500' },
