@@ -7,6 +7,7 @@ import { Session } from '@supabase/supabase-js';
 
 import { supabase } from './src/lib/supabase';
 import logger from './src/lib/logger';
+import { initI18n } from './src/i18n';
 import { AuthStack, AppStack } from './src/navigation/AppNavigator';
 import { navigationRef } from './src/navigation/navigationRef';
 
@@ -15,7 +16,10 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data, error }) => {
+    Promise.all([
+      supabase.auth.getSession(),
+      initI18n(),
+    ]).then(([{ data, error }]) => {
       if (error) {
         logger.error('App: failed to get initial session', error);
       }
