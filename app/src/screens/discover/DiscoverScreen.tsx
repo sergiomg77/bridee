@@ -77,7 +77,7 @@ export default function DiscoverScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title={t('discover.title')} />
+      <ScreenHeader title={t('discover.title')} showSearch />
 
       <ScrollView
         horizontal

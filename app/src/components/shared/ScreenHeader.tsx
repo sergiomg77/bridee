@@ -10,6 +10,7 @@ type Props = {
   onFilterPress?: () => void;
   onUserPress?: () => void;
   showMessages?: boolean;
+  showSearch?: boolean;
 };
 
 export default function ScreenHeader({
@@ -18,6 +19,7 @@ export default function ScreenHeader({
   onFilterPress,
   onUserPress,
   showMessages = true,
+  showSearch = false,
 }: Props) {
   function handleUserPress() {
     if (onUserPress) {
@@ -33,6 +35,12 @@ export default function ScreenHeader({
     }
   }
 
+  function handleSearchPress() {
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('SearchStack');
+    }
+  }
+
   return (
     <View style={styles.header}>
       <Text style={styles.title}>{title}</Text>
@@ -40,6 +48,11 @@ export default function ScreenHeader({
         {showFilter && (
           <TouchableOpacity style={styles.iconButton} onPress={onFilterPress} activeOpacity={0.7}>
             <Ionicons name="options-outline" size={22} color="#333" />
+          </TouchableOpacity>
+        )}
+        {showSearch && (
+          <TouchableOpacity style={styles.iconButton} onPress={handleSearchPress} activeOpacity={0.7}>
+            <Ionicons name="search-outline" size={22} color="#333" />
           </TouchableOpacity>
         )}
         {showMessages && (
