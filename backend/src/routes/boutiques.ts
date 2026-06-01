@@ -89,7 +89,8 @@ router.get('/:id', auth, async (req, res) => {
 
   if (error) {
     const status = error.code === 'PGRST116' ? 404 : 500;
-    res.status(status).json({ data: null, error: error.message });
+    const message = error.code === 'PGRST116' ? 'Boutique not found' : error.message;
+    res.status(status).json({ data: null, error: message });
     return;
   }
 
