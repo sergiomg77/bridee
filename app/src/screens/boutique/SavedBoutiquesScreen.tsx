@@ -59,7 +59,7 @@ export default function SavedBoutiquesScreen({ navigation }: Props) {
   }
 
   async function handleUnsave(boutiqueId: string) {
-    setBoutiques(prev => prev.filter(b => b.id !== boutiqueId));
+    setBoutiques(prev => prev.filter(b => b.boutiques.id !== boutiqueId));
     const { error } = await unsaveBoutique(boutiqueId);
     if (error) {
       logger.error('SavedBoutiquesScreen: unsaveBoutique failed', { error });
@@ -68,28 +68,24 @@ export default function SavedBoutiquesScreen({ navigation }: Props) {
   }
 
   const filtered = query.trim()
-    ? boutiques.filter(b => b.name.toLowerCase().includes(query.trim().toLowerCase()))
+    ? boutiques.filter(b => b.boutiques.name.toLowerCase().includes(query.trim().toLowerCase()))
     : boutiques;
 
   function renderCard({ item }: { item: SavedBoutique }) {
-    const cover = (item.cover_photos ?? []).sort((a, b) => a.sort_order - b.sort_order)[0];
-    const coverUri = cover ? getStorageUrl('dress-photos', cover.path) : null;
-    const logoUri = item.logo_path ? getStorageUrl('boutique-logos', item.logo_path) : null;
+    const logoUri = item.boutiques.logo_path
+      ? getStorageUrl('boutique-logos', item.boutiques.logo_path)
+      : null;
 
     return (
       <View style={styles.card}>
-        {/* Cover photo */}
+        {/* Cover placeholder — cover photos are not returned by the saved boutiques endpoint */}
         <View style={styles.coverWrapper}>
-          {coverUri ? (
-            <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
-          ) : (
-            <View style={[styles.coverImage, styles.coverPlaceholder]}>
-              <Ionicons name="storefront-outline" size={40} color="#DDD" />
-            </View>
-          )}
+          <View style={[styles.coverImage, styles.coverPlaceholder]}>
+            <Ionicons name="storefront-outline" size={40} color="#DDD" />
+          </View>
           <TouchableOpacity
             style={styles.unsaveButton}
-            onPress={() => handleUnsave(item.id)}
+            onPress={() => handleUnsave(item.boutiques.id)}
             activeOpacity={0.8}
           >
             <Ionicons name="heart" size={18} color="#E53935" />
@@ -102,31 +98,19 @@ export default function SavedBoutiquesScreen({ navigation }: Props) {
             {logoUri ? (
               <Image source={{ uri: logoUri }} style={styles.logo} resizeMode="cover" />
             ) : null}
-            <Text style={styles.boutiqueName} numberOfLines={1}>{item.name}</Text>
+            <Text style={styles.boutiqueName} numberOfLines={1}>{item.boutiques.name}</Text>
           </View>
 
-          {item.avg_rating > 0 ? (
-            <View style={styles.ratingRow}>
-              <Ionicons name="star" size={13} color="#F5A623" />
-              <Text style={styles.ratingText}>{item.avg_rating.toFixed(1)}</Text>
-              <Text style={styles.reviewCount}>({item.review_count} {t('saved_boutiques.reviews')})</Text>
-            </View>
-          ) : null}
-
-          {item.city ? (
+          {item.boutiques.city ? (
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={13} color="#888" />
-              <Text style={styles.locationText}>{item.city}</Text>
+              <Text style={styles.locationText}>{item.boutiques.city}</Text>
             </View>
           ) : null}
 
-          {item.about ? (
-            <Text style={styles.aboutText} numberOfLines={2}>{item.about}</Text>
-          ) : null}
-
-          {item.specialty_tags && item.specialty_tags.length > 0 ? (
+          {item.boutiques.specialty_tags && item.boutiques.specialty_tags.length > 0 ? (
             <View style={styles.tagsRow}>
-              {item.specialty_tags.slice(0, 3).map(tag => (
+              {item.boutiques.specialty_tags.slice(0, 3).map(tag => (
                 <View key={tag} style={styles.tag}>
                   <Text style={styles.tagText}>{tag}</Text>
                 </View>
@@ -138,14 +122,14 @@ export default function SavedBoutiquesScreen({ navigation }: Props) {
           <View style={styles.ctaRow}>
             <TouchableOpacity
               style={styles.ctaSecondary}
-              onPress={() => navigation.navigate('BoutiqueProfileScreen', { boutiqueId: item.id })}
+              onPress={() => navigation.navigate('BoutiqueProfileScreen', { boutiqueId: item.boutiques.id })}
               activeOpacity={0.8}
             >
               <Text style={styles.ctaSecondaryText}>{t('saved_boutiques.view_boutique')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.ctaPrimary}
-              onPress={() => navigation.navigate('BookAppointmentScreen', { boutiqueId: item.id })}
+              onPress={() => navigation.navigate('BookAppointmentScreen', { boutiqueId: item.boutiques.id })}
               activeOpacity={0.85}
             >
               <Text style={styles.ctaPrimaryText}>{t('saved_boutiques.book')}</Text>

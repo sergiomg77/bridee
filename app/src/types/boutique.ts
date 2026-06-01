@@ -71,7 +71,17 @@ export interface Boutique {
   promotions: BoutiquePromotion[] | null;
 }
 
-export type SavedBoutique = Boutique & {
-  review_count: number;
-  avg_rating: number;
+export type SavedBoutique = {
+  id: string;
+  created_at: string;
+  boutiques: {
+    id: string;
+    name: string;
+    city: string | null;
+    logo_path: string | null;
+    specialty_tags: string[] | null;
+    tier_label: string | null;
+    is_top_rated: boolean;
+    status: string;
+  };
 };
