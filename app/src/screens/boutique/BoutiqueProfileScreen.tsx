@@ -27,6 +27,7 @@ type Tab = 'collection' | 'about' | 'reviews';
 type Props = {
   navigation: {
     goBack(): void;
+    canGoBack(): boolean;
     navigate(screen: 'DressDetailScreen', params: { boutiqueDressId: string }): void;
     navigate(screen: 'BookAppointmentScreen', params: { boutiqueId: string; boutiqueDressId?: string }): void;
   };
@@ -340,6 +341,15 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {navigation.canGoBack() && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={28} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{boutique.name}</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+      )}
       <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[1]}>
         {/* Cover + identity */}
         <View>
@@ -349,11 +359,6 @@ export default function BoutiqueProfileScreen({ route, navigation }: Props) {
           ) : (boutique.cover_photos ?? []).length === 0 ? null : (
             <View style={styles.coverPlaceholder} />
           )}
-
-          {/* Back button overlay */}
-          <TouchableOpacity style={styles.backOverlay} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-            <Ionicons name="chevron-back" size={24} color="#333" />
-          </TouchableOpacity>
 
           {/* Identity row */}
           <View style={styles.identityRow}>
@@ -476,22 +481,6 @@ const styles = StyleSheet.create({
   coverImage: { width: '100%', height: COVER_H },
   coverPlaceholder: { width: '100%', height: COVER_H, backgroundColor: '#F0EDE8' },
   coverHeaderBar: { width: '100%', height: 56, backgroundColor: '#FAFAFA' },
-  backOverlay: {
-    position: 'absolute',
-    top: 16,
-    left: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-    elevation: 2,
-  },
 
   // Identity row
   identityRow: {
