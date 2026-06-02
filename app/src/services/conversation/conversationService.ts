@@ -7,7 +7,7 @@ export async function getInbox(): Promise<{ data: Conversation[] | null; error: 
 }
 
 export async function startConversation(
-  data: object
+  data: { participant_type: string; participant_id: string }
 ): Promise<{ data: Conversation | null; error: string | null }> {
   return apiFetch<Conversation>(API.conversations.list(), {
     method: 'POST',

@@ -102,7 +102,10 @@ export default function VendorListingScreen({ route, navigation }: Props) {
   async function handleInquire() {
     if (!listing || startingChat) return;
     setStartingChat(true);
-    const { data, error: err } = await startConversation({ vendor_id: listing.vendor_id });
+    const { data, error: err } = await startConversation({
+      participant_type: 'vendor',
+      participant_id: listing.vendor_id,
+    });
     if (err || !data) {
       logger.error('VendorListingScreen: startConversation failed', { error: err });
       setStartingChat(false);
