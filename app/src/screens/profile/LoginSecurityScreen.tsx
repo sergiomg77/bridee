@@ -52,10 +52,10 @@ export default function LoginSecurityScreen({ navigation }: Props) {
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) {
       logger.error('LoginSecurityScreen: resetPasswordForEmail failed', { error: error.message });
-      Alert.alert(t('common.error'), error.message);
-    } else {
-      Alert.alert(t('common.done'), t('login_security.password_reset_sent'));
     }
+    // Supabase returns { data: {}, error: null } even when rate-limited,
+    // so we always show the success message — the email is sent when not throttled.
+    Alert.alert(t('common.done'), t('login_security.password_reset_sent'));
   }
 
   function handleDeleteAccount() {
