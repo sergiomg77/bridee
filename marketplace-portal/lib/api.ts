@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase-server';
 import logger from '@/lib/logger';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BRIDEE_API_URL ?? 'http://localhost:3001';
@@ -8,23 +7,9 @@ export async function apiFetch<T>(
   options?: RequestInit,
   token?: string,
 ): Promise<{ data: T | null; error: string | null }> {
-  let authToken = token;
-
-  if (!authToken) {
-    try {
-      const supabase = await createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      authToken = session?.access_token ?? undefined;
-    } catch {
-      // Not in a cookie-accessible server context — proceed without token
-    }
-  }
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   if (options?.headers) {
