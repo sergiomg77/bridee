@@ -343,6 +343,19 @@
     "special_request": "Yêu cầu đặc biệt",
     "dresses": "Váy"
   },
+  "login_security": {
+    "title": "Đăng nhập & Bảo mật",
+    "section_account": "Tài khoản",
+    "section_security": "Bảo mật",
+    "email_label": "Địa chỉ Email",
+    "last_login": "Lần đăng nhập cuối",
+    "change_password": "Đổi mật khẩu",
+    "password_reset_sent": "Đã gửi link đặt lại mật khẩu. Kiểm tra email của bạn.",
+    "delete_account": "Xoá tài khoản",
+    "delete_confirm_title": "Xoá tài khoản",
+    "delete_confirm_message": "Bạn có chắc không? Hành động này không thể hoàn tác.",
+    "delete_success": "Tài khoản của bạn đã được xoá."
+  },
   "common": {
     "loading": "Đang tải...",
     "error": "Đã có lỗi xảy ra",

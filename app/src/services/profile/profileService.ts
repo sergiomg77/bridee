@@ -67,3 +67,7 @@ export async function redeemPromo(
     body: JSON.stringify({ code }),
   });
 }
+
+export async function deleteAccount(): Promise<{ data: null; error: string | null }> {
+  return apiFetch<null>(API.users.deleteMe(), { method: 'DELETE' });
+}

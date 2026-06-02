@@ -197,4 +197,17 @@ router.post('/promo', auth, async (req, res) => {
   });
 });
 
+// DELETE /api/users/me
+router.delete('/me', auth, async (req, res) => {
+  const { error } = await supabase.auth.admin.deleteUser(req.user!.id);
+
+  if (error) {
+    logger.error('DELETE /users/me failed', error);
+    res.status(500).json({ data: null, error: error.message });
+    return;
+  }
+
+  res.json({ data: null, error: null });
+});
+
 export default router;

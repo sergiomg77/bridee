@@ -5,6 +5,7 @@ export const API = {
     profile: () => `${BASE}/api/users/profile`,
     roles: () => `${BASE}/api/users/roles`,
     promo: () => `${BASE}/api/users/promo`,
+    deleteMe: () => `${BASE}/api/users/me`,
   },
   boutiques: {
     detail: (id: string) => `${BASE}/api/boutiques/${id}`,

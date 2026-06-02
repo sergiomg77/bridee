@@ -343,6 +343,19 @@
     "special_request": "Special request",
     "dresses": "Dresses"
   },
+  "login_security": {
+    "title": "Login & Security",
+    "section_account": "Account",
+    "section_security": "Security",
+    "email_label": "Email Address",
+    "last_login": "Last Login",
+    "change_password": "Change Password",
+    "password_reset_sent": "Password reset link sent. Check your email.",
+    "delete_account": "Delete Account",
+    "delete_confirm_title": "Delete Account",
+    "delete_confirm_message": "Are you sure? This cannot be undone.",
+    "delete_success": "Your account has been deleted."
+  },
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong",

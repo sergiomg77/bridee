@@ -294,7 +294,7 @@ export default function UserProfileScreen({ navigation }: Props) {
         {/* General */}
         {renderSection(t('user_profile.section_general'), <>
           {renderMenuItem('language-outline', t('user_profile.language'), handleLanguage, currentLangLabel)}
-          {renderMenuItem('shield-outline', t('user_profile.login_security'), showComingSoon)}
+          {renderMenuItem('shield-outline', t('user_profile.login_security'), () => navigation.navigate('LoginSecurityScreen'))}
         </>)}
 
         {/* Support */}

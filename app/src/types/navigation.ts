@@ -86,6 +86,7 @@ export type ProfileStackParamList = {
   BoutiqueProfileScreen: { boutiqueId: string };
   BookAppointmentScreen: { boutiqueId: string; boutiqueDressId?: string };
   ReferencePhotoScreen: { boutiqueDressId: string };
+  LoginSecurityScreen: undefined;
 };
 
 export type RootStackParamList = {
