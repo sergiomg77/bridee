@@ -187,7 +187,7 @@ export default function ExploreScreen({ navigation }: Props) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScreenHeader title={t('explore.title')} />
+      <ScreenHeader title={t('explore.title')} showSearch />
 
       {/* Filter tabs */}
       <ScrollView
