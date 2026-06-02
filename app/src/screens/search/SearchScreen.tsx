@@ -136,6 +136,7 @@ export default function SearchScreen({ navigation }: Props) {
           data={results}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          style={styles.flatList}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -197,6 +198,7 @@ const styles = StyleSheet.create({
   noResultsText: { fontSize: 18, fontWeight: '600', color: '#333', marginTop: 16, marginBottom: 8 },
   tryDifferentText: { fontSize: 14, color: '#999', textAlign: 'center' },
 
+  flatList: { flex: 1 },
   list: { padding: 16, gap: 12 },
   resultCount: { fontSize: 13, color: '#999', marginBottom: 8 },
 
