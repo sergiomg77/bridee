@@ -9,7 +9,7 @@ const router = Router();
 router.get('/categories', async (_req, res) => {
   const { data, error } = await supabase
     .from('marketplace_categories')
-    .select('id, name, slug, icon_name, sort_order, filter_config')
+    .select('id, name, slug, icon_name, sort_order, is_active, filter_config')
     .eq('is_active', true)
     .order('sort_order', { ascending: true });
 

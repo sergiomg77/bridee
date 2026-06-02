@@ -51,7 +51,7 @@ export default function MarketplaceHomeScreen({ navigation }: Props) {
       return;
     }
 
-    const active = cats.filter(c => c.is_active).sort((a, b) => a.sort_order - b.sort_order);
+    const active = cats.filter(c => c.is_active !== false).sort((a, b) => a.sort_order - b.sort_order);
     setCategories(active);
 
     const topCategories = active.slice(0, 3);
