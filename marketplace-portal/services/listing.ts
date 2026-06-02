@@ -95,10 +95,10 @@ export async function fetchVendorListings(
     .eq('vendor_id', vendorId)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    logger.error('fetchVendorListings: query failed', error);
-    return { data: null, error: error.message };
-  }
+if (error) {
+  logger.error('fetchVendorListings: query failed', { message: error.message, code: error.code, details: error.details, hint: error.hint });
+  return { data: null, error: error.message };
+}
 
   const rows: ListingRow[] = ((data ?? []) as Record<string, unknown>[]).map((row) => {
     const photos = (Array.isArray(row.vendor_listing_photos)
