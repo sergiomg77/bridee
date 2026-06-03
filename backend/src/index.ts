@@ -15,6 +15,7 @@ import marketplaceRouter from './routes/marketplace';
 import vendorsRouter from './routes/vendors';
 import searchRouter from './routes/search';
 import adminRouter from './routes/admin';
+import { auth } from './middleware/auth';
 
 // Bridge credentials path for Google SDK
 if (process.env.BRIDEE_GOOGLE_CREDENTIALS_PATH) {
@@ -51,7 +52,7 @@ app.use('/api/conversations', conversationsRouter);
 app.use('/api/marketplace', marketplaceRouter);
 app.use('/api/vendors', vendorsRouter);
 app.use('/api/search', searchRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/admin', auth, adminRouter);
 
 const port = parseInt(process.env.BRIDEE_PORT ?? '3001', 10);
 app.listen(port, () => {
