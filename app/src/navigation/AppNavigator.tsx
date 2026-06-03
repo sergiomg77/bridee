@@ -39,6 +39,7 @@ import PromoCodeScreen from '../screens/profile/PromoCodeScreen';
 import AppointmentsScreen from '../screens/appointments/AppointmentsScreen';
 import SavedBoutiquesScreen from '../screens/boutique/SavedBoutiquesScreen';
 import LoginSecurityScreen from '../screens/profile/LoginSecurityScreen';
+import TermsScreen from '../screens/profile/TermsScreen';
 
 import type {
   AuthStackParamList,
@@ -165,6 +166,7 @@ function ProfileStack() {
       <ProfileNav.Screen name="SettingsScreen" component={SettingsScreen} />
       <ProfileNav.Screen name="ReferencePhotoScreen" component={ReferencePhotoScreen as React.ComponentType} />
       <ProfileNav.Screen name="LoginSecurityScreen" component={LoginSecurityScreen} />
+      <ProfileNav.Screen name="TermsScreen" component={TermsScreen} />
     </ProfileNav.Navigator>
   );
 }

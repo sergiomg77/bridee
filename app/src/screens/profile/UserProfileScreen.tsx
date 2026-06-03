@@ -300,7 +300,7 @@ export default function UserProfileScreen({ navigation }: Props) {
         {/* Support */}
         {renderSection(t('user_profile.section_support'), <>
           {renderMenuItem('help-circle-outline', t('user_profile.help_centre'), handleHelpCentre)}
-          {renderMenuItem('document-text-outline', t('user_profile.terms_policies'), showComingSoon)}
+          {renderMenuItem('document-text-outline', t('user_profile.terms_policies'), () => navigation.navigate('TermsScreen'))}
           {renderMenuItem('information-circle-outline', t('user_profile.about_bridee'), handleAbout)}
           {renderMenuItem('chatbubble-ellipses-outline', t('user_profile.share_feedback'), handleShareFeedback)}
         </>)}
