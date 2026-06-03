@@ -150,12 +150,6 @@ export default function UserProfileScreen({ navigation }: Props) {
     // App.tsx onAuthStateChange handles navigation to AuthStack
   }
 
-  function handleHelpCentre() {
-    Linking.openURL('https://help.bridee.com').catch(() => {
-      Alert.alert(t('common.error'), 'Unable to open link.');
-    });
-  }
-
   function handleRegisterBoutique() {
     Linking.openURL('https://portal.bridee.app/register').catch(() => {
       Alert.alert(t('common.error'), 'Unable to open link.');
@@ -295,7 +289,7 @@ export default function UserProfileScreen({ navigation }: Props) {
 
         {/* Support */}
         {renderSection(t('user_profile.section_support'), <>
-          {renderMenuItem('help-circle-outline', t('user_profile.help_centre'), handleHelpCentre)}
+          {renderMenuItem('help-circle-outline', t('user_profile.help_centre'), () => navigation.navigate('HelpCentreScreen'))}
           {renderMenuItem('document-text-outline', t('user_profile.terms_policies'), () => navigation.navigate('TermsScreen'))}
           {renderMenuItem('information-circle-outline', t('user_profile.about_bridee'), () => navigation.navigate('AboutScreen'))}
           {renderMenuItem('chatbubble-ellipses-outline', t('user_profile.share_feedback'), handleShareFeedback)}

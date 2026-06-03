@@ -89,6 +89,7 @@ export type ProfileStackParamList = {
   LoginSecurityScreen: undefined;
   TermsScreen: undefined;
   AboutScreen: undefined;
+  HelpCentreScreen: undefined;
 };
 
 export type RootStackParamList = {
