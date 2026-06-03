@@ -27,6 +27,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "bridee"
+    "scheme": "bridee",
+    "plugins": [
+      "expo-web-browser"
+    ],
+    "extra": {
+      "googleWebClientId": "307192875715-rps1hkvsmmjmtl0ufi905ogbikpqq7lt.apps.googleusercontent.com"
+    }
   }
 }
