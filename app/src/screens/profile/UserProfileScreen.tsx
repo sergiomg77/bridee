@@ -157,13 +157,13 @@ export default function UserProfileScreen({ navigation }: Props) {
   }
 
   function handleRegisterBoutique() {
-    Linking.openURL('https://partners.bridee.com/register').catch(() => {
+    Linking.openURL('https://portal.bridee.app/register').catch(() => {
       Alert.alert(t('common.error'), 'Unable to open link.');
     });
   }
 
   function handleBecomePartner() {
-    Linking.openURL('https://vendors.bridee.com/register').catch(() => {
+    Linking.openURL('https://marketplace.bridee.app/register').catch(() => {
       Alert.alert(t('common.error'), 'Unable to open link.');
     });
   }
