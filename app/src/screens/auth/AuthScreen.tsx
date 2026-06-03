@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import AuthToggleTabs from '../../components/auth/AuthToggleTabs';
 import AuthFormFields from '../../components/auth/AuthFormFields';
 import SocialLoginButtons from '../../components/auth/SocialLoginButtons';
 import EmailConfirmationView from '../../components/auth/EmailConfirmationView';
 import { signIn, signUp, signInWithGoogle, signInWithApple } from '../../services/auth/authService';
+import { getLocale, setLanguage } from '../../i18n';
 import logger from '../../lib/logger';
 import { AuthMode } from '../../types/auth';
 
@@ -17,6 +19,7 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [locale, setLocale] = useState<'vi' | 'en'>(getLocale());
 
   function clearError() {
     setErrorMessage(null);
@@ -33,6 +36,12 @@ export default function AuthScreen() {
     setPassword('');
     clearError();
     setMode('signin');
+  }
+
+  async function handleToggleLanguage() {
+    const next = locale === 'vi' ? 'en' : 'vi';
+    await setLanguage(next);
+    setLocale(next);
   }
 
   async function handleSubmit() {
@@ -92,49 +101,59 @@ export default function AuthScreen() {
   }
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-      keyboardShouldPersistTaps="handled"
-    >
-      <StatusBar style="dark" />
+    <View style={styles.wrapper}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <StatusBar style="dark" />
 
-      <Text style={styles.logo}>Bridee</Text>
-      <Text style={styles.tagline}>Find your perfect dress</Text>
+        <Text style={styles.logo}>Bridee</Text>
+        <Text style={styles.tagline}>Find your perfect dress</Text>
 
-      {showConfirmation ? (
-        <EmailConfirmationView onBackToSignIn={handleBackToSignIn} />
-      ) : (
-        <>
-          <AuthToggleTabs mode={mode} onModeChange={handleModeChange} />
+        {showConfirmation ? (
+          <EmailConfirmationView onBackToSignIn={handleBackToSignIn} />
+        ) : (
+          <>
+            <AuthToggleTabs mode={mode} onModeChange={handleModeChange} />
 
-          {errorMessage ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
-            </View>
-          ) : null}
+            {errorMessage ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            ) : null}
 
-          <AuthFormFields
-            mode={mode}
-            email={email}
-            password={password}
-            loading={loading}
-            onEmailChange={setEmail}
-            onPasswordChange={setPassword}
-            onSubmit={handleSubmit}
-          />
+            <AuthFormFields
+              mode={mode}
+              email={email}
+              password={password}
+              loading={loading}
+              onEmailChange={setEmail}
+              onPasswordChange={setPassword}
+              onSubmit={handleSubmit}
+            />
 
-          <SocialLoginButtons
-            loading={loading}
-            onGooglePress={handleGooglePress}
-            onApplePress={handleApplePress}
-          />
-        </>
-      )}
-    </ScrollView>
+            <SocialLoginButtons
+              loading={loading}
+              onGooglePress={handleGooglePress}
+              onApplePress={handleApplePress}
+            />
+          </>
+        )}
+      </ScrollView>
+
+      <TouchableOpacity style={styles.langToggle} onPress={handleToggleLanguage} activeOpacity={0.7}>
+        <Ionicons name="language-outline" size={15} color="#C9A96E" />
+        <Text style={styles.langToggleText}>{locale.toUpperCase()}</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flexGrow: 1,
     backgroundColor: '#FAFAFA',
@@ -166,5 +185,24 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#CC3333',
     fontSize: 14,
+  },
+  langToggle: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#C9A96E',
+    backgroundColor: '#FAFAFA',
+  },
+  langToggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#C9A96E',
   },
 });
