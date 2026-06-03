@@ -2,16 +2,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, getSession } from '@/lib/auth';
-import { apiFetch } from '@/lib/api';
-import { createClient } from '@/lib/supabase';
+import { signIn } from '@/lib/auth';
 import logger from '@/lib/logger';
-
-interface UserRole {
-  id: string;
-  role: string;
-  created_at: string;
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,36 +27,7 @@ export default function LoginPage() {
         return;
       }
 
-      const session = await getSession();
-      const token = session?.access_token ?? null;
-
-      const { data: rolesData, error: rolesError } = await apiFetch<{ data: UserRole[] | null; error: string | null }>(
-        '/api/users/roles',
-        {},
-        token ?? undefined,
-      );
-
-      if (rolesError || !rolesData?.data) {
-        logger.error('LoginPage: roles fetch failed', { error: rolesError });
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        setError('Could not verify admin access. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      const isAdmin = rolesData.data.some((r) => r.role === 'admin');
-
-      if (!isAdmin) {
-        logger.warn('LoginPage: user does not have admin role', { userId: session?.user?.id });
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        setError('You do not have admin access.');
-        setLoading(false);
-        return;
-      }
-
-      logger.info('LoginPage: admin signed in');
+      logger.info('LoginPage: signed in, redirecting to dashboard');
       router.refresh();
       router.push('/dashboard');
     } catch (err) {
