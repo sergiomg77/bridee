@@ -65,8 +65,8 @@ export default function LoginPage() {
       }
 
       logger.info('LoginPage: admin signed in');
-      router.push('/dashboard');
       router.refresh();
+      router.push('/dashboard');
     } catch (err) {
       logger.error('LoginPage: unexpected error', err);
       setError('An unexpected error occurred. Please try again.');

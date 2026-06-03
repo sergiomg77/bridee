@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase-server';
 import { apiFetch } from '@/lib/api';
 import AdminLayout from '@/components/AdminLayout';
 
@@ -14,24 +14,15 @@ interface VendorRow {
   status: string;
 }
 
-async function getAdminToken(): Promise<string | undefined> {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get('sb-mtjasodbcnygipmmxjvk-auth-token')?.value;
-  if (!accessToken) return undefined;
-  try {
-    const parsed = JSON.parse(accessToken) as { access_token?: string };
-    return parsed.access_token;
-  } catch {
-    return undefined;
-  }
-}
-
 export default async function DashboardPage() {
-  const token = await getAdminToken();
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
 
-  if (!token) {
+  if (!session?.access_token) {
     redirect('/login');
   }
+
+  const token = session.access_token;
 
   const [boutiquesRes, vendorsRes] = await Promise.all([
     apiFetch<{ data: BoutiqueRow[] | null; error: string | null }>('/api/admin/boutiques', {}, token),
