@@ -88,6 +88,7 @@ export type ProfileStackParamList = {
   ReferencePhotoScreen: { boutiqueDressId: string };
   LoginSecurityScreen: undefined;
   TermsScreen: undefined;
+  AboutScreen: undefined;
 };
 
 export type RootStackParamList = {

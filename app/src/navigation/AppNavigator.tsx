@@ -40,6 +40,7 @@ import AppointmentsScreen from '../screens/appointments/AppointmentsScreen';
 import SavedBoutiquesScreen from '../screens/boutique/SavedBoutiquesScreen';
 import LoginSecurityScreen from '../screens/profile/LoginSecurityScreen';
 import TermsScreen from '../screens/profile/TermsScreen';
+import AboutScreen from '../screens/profile/AboutScreen';
 
 import type {
   AuthStackParamList,
@@ -167,6 +168,7 @@ function ProfileStack() {
       <ProfileNav.Screen name="ReferencePhotoScreen" component={ReferencePhotoScreen as React.ComponentType} />
       <ProfileNav.Screen name="LoginSecurityScreen" component={LoginSecurityScreen} />
       <ProfileNav.Screen name="TermsScreen" component={TermsScreen} />
+      <ProfileNav.Screen name="AboutScreen" component={AboutScreen} />
     </ProfileNav.Navigator>
   );
 }

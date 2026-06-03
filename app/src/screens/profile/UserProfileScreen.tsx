@@ -168,10 +168,6 @@ export default function UserProfileScreen({ navigation }: Props) {
     });
   }
 
-  function handleAbout() {
-    Alert.alert(t('user_profile.about_bridee'), `${t('user_profile.version')} ${APP_VERSION}`);
-  }
-
   async function handleShareFeedback() {
     try {
       await Share.share({ message: 'I love using Bridee to find my dream wedding dress! 💍' });
@@ -301,7 +297,7 @@ export default function UserProfileScreen({ navigation }: Props) {
         {renderSection(t('user_profile.section_support'), <>
           {renderMenuItem('help-circle-outline', t('user_profile.help_centre'), handleHelpCentre)}
           {renderMenuItem('document-text-outline', t('user_profile.terms_policies'), () => navigation.navigate('TermsScreen'))}
-          {renderMenuItem('information-circle-outline', t('user_profile.about_bridee'), handleAbout)}
+          {renderMenuItem('information-circle-outline', t('user_profile.about_bridee'), () => navigation.navigate('AboutScreen'))}
           {renderMenuItem('chatbubble-ellipses-outline', t('user_profile.share_feedback'), handleShareFeedback)}
         </>)}
 
