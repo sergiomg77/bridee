@@ -319,4 +319,255 @@ router.post('/:id/listings/:listingId/photos', auth, async (req, res) => {
   res.status(201).json({ data, error: null });
 });
 
+// GET /api/vendors/me — return vendor profile owned by authenticated user
+router.get('/me', auth, async (req, res) => {
+  const { data: vendor, error: vendorError } = await supabase
+    .from('vendors')
+    .select('*')
+    .eq('owner_user_id', req.user!.id)
+    .maybeSingle();
+
+  if (vendorError) {
+    logger.error('GET /vendors/me: query failed', vendorError);
+    res.status(500).json({ data: null, error: vendorError.message });
+    return;
+  }
+
+  if (!vendor) {
+    res.status(404).json({ data: null, error: 'No vendor profile found' });
+    return;
+  }
+
+  const vendorId = (vendor as Record<string, unknown> & { id: string }).id;
+
+  const { data: listings, error: listingsError } = await supabase
+    .from('vendor_listings')
+    .select(`
+      *,
+      vendor_listing_photos ( * ),
+      vendor_packages ( * )
+    `)
+    .eq('vendor_id', vendorId);
+
+  if (listingsError) {
+    logger.error('GET /vendors/me: listings query failed', listingsError);
+    res.status(500).json({ data: null, error: listingsError.message });
+    return;
+  }
+
+  res.json({ data: { ...(vendor as Record<string, unknown>), listings }, error: null });
+});
+
+// GET /api/vendors/:id/listings — return all listings with photos and active packages
+router.get('/:id/listings', auth, async (req, res) => {
+  const { id } = req.params as { id: string };
+
+  if (!(await verifyVendorOwnership(id, req.user!.id))) {
+    res.status(403).json({ data: null, error: 'Forbidden' });
+    return;
+  }
+
+  const { data: listings, error: listingsError } = await supabase
+    .from('vendor_listings')
+    .select('*')
+    .eq('vendor_id', id);
+
+  if (listingsError) {
+    logger.error('GET /vendors/:id/listings: query failed', listingsError);
+    res.status(500).json({ data: null, error: listingsError.message });
+    return;
+  }
+
+  const listingsTyped = (listings ?? []) as Array<Record<string, unknown> & { id: string }>;
+
+  if (listingsTyped.length === 0) {
+    res.json({ data: [], error: null });
+    return;
+  }
+
+  const listingIds = listingsTyped.map((l) => l.id);
+
+  const [photosResult, packagesResult] = await Promise.all([
+    supabase
+      .from('vendor_listing_photos')
+      .select('*')
+      .in('listing_id', listingIds)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('vendor_packages')
+      .select('*')
+      .in('listing_id', listingIds)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+  ]);
+
+  if (photosResult.error) {
+    logger.error('GET /vendors/:id/listings: photos query failed', photosResult.error);
+    res.status(500).json({ data: null, error: photosResult.error.message });
+    return;
+  }
+
+  if (packagesResult.error) {
+    logger.error('GET /vendors/:id/listings: packages query failed', packagesResult.error);
+    res.status(500).json({ data: null, error: packagesResult.error.message });
+    return;
+  }
+
+  const photos = (photosResult.data ?? []) as Array<Record<string, unknown> & { listing_id: string }>;
+  const packages = (packagesResult.data ?? []) as Array<Record<string, unknown> & { listing_id: string }>;
+
+  const data = listingsTyped.map((listing) => ({
+    ...listing,
+    vendor_listing_photos: photos.filter((p) => p.listing_id === listing.id),
+    vendor_packages: packages.filter((p) => p.listing_id === listing.id),
+  }));
+
+  res.json({ data, error: null });
+});
+
+// POST /api/vendors/:id/listings/:listingId/packages — create a package
+router.post('/:id/listings/:listingId/packages', auth, async (req, res) => {
+  const { id, listingId } = req.params as { id: string; listingId: string };
+
+  if (!(await verifyVendorOwnership(id, req.user!.id))) {
+    res.status(403).json({ data: null, error: 'Forbidden' });
+    return;
+  }
+
+  const {
+    name,
+    pricing_model,
+    description,
+    price,
+    price_currency = 'VND',
+    sort_order = 0,
+  } = req.body as {
+    name?: string;
+    pricing_model?: 'fixed' | 'per_hour' | 'quote';
+    description?: string;
+    price?: number | null;
+    price_currency?: string;
+    sort_order?: number;
+  };
+
+  if (!name || !pricing_model) {
+    res.status(400).json({ data: null, error: 'name and pricing_model are required' });
+    return;
+  }
+
+  if (!['fixed', 'per_hour', 'quote'].includes(pricing_model)) {
+    res.status(400).json({ data: null, error: 'pricing_model must be one of: fixed, per_hour, quote' });
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('vendor_packages')
+    .insert({
+      listing_id: listingId,
+      name,
+      pricing_model,
+      description: description ?? null,
+      price: pricing_model === 'quote' ? null : (price ?? null),
+      price_currency,
+      sort_order,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('POST /vendors/:id/listings/:listingId/packages: insert failed', error);
+    res.status(500).json({ data: null, error: error.message });
+    return;
+  }
+
+  res.status(201).json({ data, error: null });
+});
+
+// PUT /api/vendors/:id/listings/:listingId/packages/:packageId — update a package
+router.put('/:id/listings/:listingId/packages/:packageId', auth, async (req, res) => {
+  const { id, listingId, packageId } = req.params as {
+    id: string;
+    listingId: string;
+    packageId: string;
+  };
+
+  if (!(await verifyVendorOwnership(id, req.user!.id))) {
+    res.status(403).json({ data: null, error: 'Forbidden' });
+    return;
+  }
+
+  const {
+    name,
+    description,
+    pricing_model,
+    price,
+    price_currency,
+    sort_order,
+    is_active,
+  } = req.body as {
+    name?: string;
+    description?: string;
+    pricing_model?: 'fixed' | 'per_hour' | 'quote';
+    price?: number | null;
+    price_currency?: string;
+    sort_order?: number;
+    is_active?: boolean;
+  };
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (name !== undefined) updates.name = name;
+  if (description !== undefined) updates.description = description;
+  if (pricing_model !== undefined) updates.pricing_model = pricing_model;
+  if (price !== undefined) updates.price = price;
+  if (price_currency !== undefined) updates.price_currency = price_currency;
+  if (sort_order !== undefined) updates.sort_order = sort_order;
+  if (is_active !== undefined) updates.is_active = is_active;
+
+  const { data, error } = await supabase
+    .from('vendor_packages')
+    .update(updates)
+    .eq('id', packageId)
+    .eq('listing_id', listingId)
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('PUT /vendors/:id/listings/:listingId/packages/:packageId: update failed', error);
+    res.status(500).json({ data: null, error: error.message });
+    return;
+  }
+
+  res.json({ data, error: null });
+});
+
+// DELETE /api/vendors/:id/listings/:listingId/packages/:packageId — soft-deactivate a package
+router.delete('/:id/listings/:listingId/packages/:packageId', auth, async (req, res) => {
+  const { id, listingId, packageId } = req.params as {
+    id: string;
+    listingId: string;
+    packageId: string;
+  };
+
+  if (!(await verifyVendorOwnership(id, req.user!.id))) {
+    res.status(403).json({ data: null, error: 'Forbidden' });
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('vendor_packages')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', packageId)
+    .eq('listing_id', listingId)
+    .select()
+    .single();
+
+  if (error) {
+    logger.error('DELETE /vendors/:id/listings/:listingId/packages/:packageId: deactivate failed', error);
+    res.status(500).json({ data: null, error: error.message });
+    return;
+  }
+
+  res.json({ data, error: null });
+});
+
 export default router;
