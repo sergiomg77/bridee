@@ -32,7 +32,10 @@
       "expo-web-browser"
     ],
     "extra": {
-      "googleWebClientId": "307192875715-rps1hkvsmmjmtl0ufi905ogbikpqq7lt.apps.googleusercontent.com"
+      "googleWebClientId": "307192875715-rps1hkvsmmjmtl0ufi905ogbikpqq7lt.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "29593401-d85b-47c1-b220-055616c61d75"
+      }
     }
   }
 }
